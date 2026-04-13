@@ -1,0 +1,17 @@
+# Umgebungsvariablen
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+env/
+
+# IDE
+.idea/
+.vscode/
+
+# Azure
+.azure/
