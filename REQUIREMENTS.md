@@ -54,8 +54,8 @@
 <details>
 <summary><strong>Nutzerverwaltung</strong></summary>
 
-- 🔴 Registrierung und Benutzerkontoverwaltung
-- 🔴 Anmeldung mit Authentifizierung
+- 🔴 Registrierung
+- 🟡 Anmeldung mit Authentifizierung
 
 </details>
 
@@ -120,18 +120,6 @@
 <details>
 <summary><strong>Sonstiges</strong></summary>
 
-- 🟢 FAQ-Bereich
+- 🔴 FAQ-Bereich
 
 </details>
-
----
-
-## ⚠️ Constraints & Akzeptanzkriterien
-
-> Aus den Interviews abgeleitete Ausschlusskriterien, die als übergreifende Qualitätsziele gelten:
-
-| Kriterium | Beschreibung |
-|-----------|--------------|
-| 🚫 Kein übermäßiger manueller Aufwand | Dateneingabe muss zumutbar bleiben – wo möglich automatisieren oder vorbelegen |
-| 🚫 Keine mangelnde Transparenz | Berechnungslogik muss für den Nutzer jederzeit nachvollziehbar sein |
-| 🚫 Keine Überforderung | Komplexität wird schrittweise eingeführt (Progressive Disclosure) |
