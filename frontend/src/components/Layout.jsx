@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { NavLink } from 'react-router-dom'
 
 const navItems = [
@@ -52,41 +53,86 @@ const navItems = [
   },
 ]
 
+function NavLinks({ onNavigate }) {
+  return (
+    <nav className="flex-1 px-3 py-4 space-y-1">
+      {navItems.map(({ to, label, icon }) => (
+        <NavLink
+          key={to}
+          to={to}
+          onClick={onNavigate}
+          className={({ isActive }) =>
+            `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              isActive
+                ? 'bg-emerald-500 text-white'
+                : 'text-slate-400 hover:bg-slate-800 hover:text-white'
+            }`
+          }
+        >
+          {icon}
+          {label}
+        </NavLink>
+      ))}
+    </nav>
+  )
+}
+
 export default function Layout({ children }) {
+  const [open, setOpen] = useState(false)
+
   return (
     <div className="flex min-h-screen">
-      {/* Sidebar */}
-      <aside className="w-56 bg-slate-900 text-white flex flex-col shrink-0">
-        {/* Logo */}
+
+      {/* ── Desktop sidebar ── */}
+      <aside className="hidden lg:flex w-56 bg-slate-900 text-white flex-col shrink-0">
         <div className="px-6 py-6 border-b border-slate-700">
           <span className="text-lg font-bold tracking-tight">FinanzPlaner</span>
         </div>
-
-        {/* Nav links */}
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map(({ to, label, icon }) => (
-            <NavLink
-              key={to}
-              to={to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                  isActive
-                    ? 'bg-emerald-500 text-white'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-white'
-                }`
-              }
-            >
-              {icon}
-              {label}
-            </NavLink>
-          ))}
-        </nav>
+        <NavLinks />
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 bg-slate-100 overflow-y-auto">
-        {children}
-      </main>
+      {/* ── Mobile overlay ── */}
+      {open && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {/* ── Mobile drawer ── */}
+      <aside
+        className={`fixed top-0 left-0 h-full w-64 bg-slate-900 text-white flex flex-col z-50 transform transition-transform duration-300 lg:hidden ${
+          open ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <div className="px-6 py-6 border-b border-slate-700 flex items-center justify-between">
+          <span className="text-lg font-bold tracking-tight">FinanzPlaner</span>
+          <button onClick={() => setOpen(false)} className="text-slate-400 hover:text-white">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
+            </svg>
+          </button>
+        </div>
+        <NavLinks onNavigate={() => setOpen(false)} />
+      </aside>
+
+      {/* ── Main area ── */}
+      <div className="flex-1 flex flex-col min-w-0">
+
+        {/* Mobile top bar */}
+        <header className="lg:hidden bg-slate-900 text-white px-4 py-4 flex items-center gap-4 shrink-0">
+          <button onClick={() => setOpen(true)} className="text-slate-300 hover:text-white">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path d="M4 6h16M4 12h16M4 18h16" strokeLinecap="round" />
+            </svg>
+          </button>
+          <span className="text-base font-bold tracking-tight">FinanzPlaner</span>
+        </header>
+
+        <main className="flex-1 bg-slate-100 overflow-y-auto">
+          {children}
+        </main>
+      </div>
     </div>
   )
 }

@@ -101,7 +101,7 @@ export default function MeineFinanzen() {
   return (
     <div className="p-8 space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Meine Finanzen</h1>
           <p className="text-sm text-slate-500 mt-1">Verwalten Sie Ihre Einnahmen und Ausgaben</p>
@@ -115,7 +115,7 @@ export default function MeineFinanzen() {
       </div>
 
       {/* KPI cards */}
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="bg-white rounded-xl p-6 shadow-sm flex justify-between items-start">
           <div>
             <p className="text-sm text-slate-500 mb-3">Gesamteinkommen</p>
