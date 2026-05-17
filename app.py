@@ -1,10 +1,10 @@
 import os
+from dotenv import load_dotenv
+load_dotenv()  # must run before config.py reads the environment variables
+
 from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from config import bcrypt, find_user_by_email, create_user
-from dotenv import load_dotenv
-
-load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(32))
@@ -80,6 +80,17 @@ def login():
             "email":    user["email"],
         }
     }), 200
+
+
+# ── ALL USERS (only for development — remove before going live) ───
+@app.route("/api/users", methods=["GET"])
+def all_users():
+    from config import container
+    users = list(container.query_items(
+        query="SELECT c.id, c.vorname, c.nachname, c.email FROM c",
+        enable_cross_partition_query=True
+    ))
+    return jsonify(users), 200
 
 
 # ── LOGOUT ────────────────────────────────────────────────
