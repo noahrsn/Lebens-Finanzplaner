@@ -58,14 +58,38 @@ function ExpenseIcon() {
   )
 }
 
+const emptyForm = { type: 'income', title: '', amount: '', category: '' }
+
 export default function MeineFinanzen() {
   const [activeFilter, setActiveFilter] = useState('Alle')
   const [search, setSearch] = useState('')
+  const [list, setList] = useState(transactions)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [form, setForm] = useState(emptyForm)
 
-  const totalIncome  = transactions.filter(t => t.income).reduce((s, t) => s + t.amount, 0)
-  const totalExpense = transactions.filter(t => !t.income).reduce((s, t) => s + Math.abs(t.amount), 0)
+  const totalIncome  = list.filter(t => t.income).reduce((s, t) => s + t.amount, 0)
+  const totalExpense = list.filter(t => !t.income).reduce((s, t) => s + Math.abs(t.amount), 0)
 
-  const filtered = transactions.filter(t => {
+  function openModal() { setForm(emptyForm); setModalOpen(true) }
+  function closeModal() { setModalOpen(false) }
+
+  function saveTransaction() {
+    const amt = parseFloat(form.amount)
+    if (!form.title || isNaN(amt) || amt <= 0) return
+    const isIncome = form.type === 'income'
+    const newItem = {
+      id: Date.now(),
+      name: form.title,
+      date: new Date().toISOString().slice(0, 10),
+      category: form.category || (isIncome ? 'Einkommen' : 'Sonstiges'),
+      amount: isIncome ? amt : -amt,
+      income: isIncome,
+    }
+    setList(prev => [newItem, ...prev])
+    closeModal()
+  }
+
+  const filtered = list.filter(t => {
     const matchFilter =
       activeFilter === 'Alle' ||
       (activeFilter === 'Einnahmen' && t.income) ||
@@ -82,7 +106,10 @@ export default function MeineFinanzen() {
           <h1 className="text-2xl font-bold text-slate-900">Meine Finanzen</h1>
           <p className="text-sm text-slate-500 mt-1">Verwalten Sie Ihre Einnahmen und Ausgaben</p>
         </div>
-        <button className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors">
+        <button
+          onClick={openModal}
+          className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
+        >
           <span className="text-lg leading-none">+</span> Transaktion hinzufügen
         </button>
       </div>
@@ -205,6 +232,109 @@ export default function MeineFinanzen() {
           ))}
         </div>
       </div>
+      {/* Modal */}
+      {modalOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+            {/* Modal header */}
+            <div className="flex items-start justify-between mb-1">
+              <div>
+                <h3 className="text-lg font-bold text-slate-900">Neue Transaktion hinzufügen</h3>
+                <p className="text-sm text-slate-500 mt-0.5">Fügen Sie eine neue Einnahme oder Ausgabe hinzu.</p>
+              </div>
+              <button onClick={closeModal} className="text-slate-400 hover:text-slate-600 mt-0.5">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4 mt-5">
+              {/* Type selection */}
+              <div>
+                <p className="text-sm font-medium text-slate-700 mb-2">Transaktionstyp</p>
+                <div className="space-y-2">
+                  {[
+                    { value: 'income',  label: 'Einkommen', sub: 'Gehalt, Bonus, etc.',   icon: <IncomeIcon />,  bg: 'bg-emerald-50 text-emerald-500' },
+                    { value: 'expense', label: 'Ausgabe',   sub: 'Miete, Einkäufe, etc.', icon: <ExpenseIcon />, bg: 'bg-red-50 text-red-400' },
+                  ].map(opt => (
+                    <button
+                      key={opt.value}
+                      onClick={() => setForm(f => ({ ...f, type: opt.value }))}
+                      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-colors text-left ${
+                        form.type === opt.value ? 'border-slate-900' : 'border-slate-100 hover:border-slate-200'
+                      }`}
+                    >
+                      <span className="text-slate-400 text-lg">
+                        {form.type === opt.value ? '●' : '○'}
+                      </span>
+                      <div className={`p-1.5 rounded-lg ${opt.bg}`}>{opt.icon}</div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">{opt.label}</p>
+                        <p className="text-xs text-slate-400">{opt.sub}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Title */}
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-1">Titel</label>
+                <input
+                  type="text"
+                  placeholder="z.B. Gehalt"
+                  value={form.title}
+                  onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {/* Amount */}
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-1">Betrag (€)</label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="0.00"
+                  value={form.amount}
+                  onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+
+              {/* Category */}
+              <div>
+                <label className="text-sm font-medium text-slate-700 block mb-1">Kategorie (optional)</label>
+                <input
+                  type="text"
+                  placeholder="z.B. Nebeneinkommen"
+                  value={form.category}
+                  onChange={e => setForm(f => ({ ...f, category: e.target.value }))}
+                  className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                />
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={closeModal}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={saveTransaction}
+                className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold transition-colors"
+              >
+                Transaktion speichern
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
