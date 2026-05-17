@@ -1,58 +1,43 @@
-from flask import Flask
-from flask_login import UserMixin, LoginManager
-from flask_wtf.csrf import CSRFProtect
-from flask_bcrypt import Bcrypt
-from azure.cosmos import CosmosClient, exceptions
 import os
+import uuid
+from flask_bcrypt import Bcrypt
+from azure.cosmos import CosmosClient, PartitionKey
 
-app = Flask(__name__,  template_folder='../templates')
+# bcrypt is used to hash passwords — we create it here so app.py can import it
+bcrypt = Bcrypt()
 
-app.config['SECRET_KEY'] = os.environ.get("SECRET_KEY", os.urandom(32))
+# Read Cosmos DB credentials from the .env file
+COSMOS_ENDPOINT   = os.environ.get("COSMOS_ENDPOINT")
+COSMOS_KEY        = os.environ.get("COSMOS_KEY")
+DATABASE_NAME     = os.environ.get("COSMOS_DATABASE", "Lebens-Finanzplaner")
+CONTAINER_NAME    = os.environ.get("COSMOS_CONTAINER_NAME", "users")
 
-csrf = CSRFProtect(app)
-csrf.init_app(app)
-bcrypt = Bcrypt(app)
+# Connect to Cosmos DB
+client    = CosmosClient(COSMOS_ENDPOINT, credential=COSMOS_KEY)
+database  = client.create_database_if_not_exists(id=DATABASE_NAME)
+container = database.create_container_if_not_exists(
+    id=CONTAINER_NAME,
+    partition_key=PartitionKey(path="/id")
+)
 
-login_manager = LoginManager(app)
-login_manager.login_view = 'login'
-login_manager.login_message_category = 'info'
 
-# Azure Cosmos DB config
-COSMOS_ENDPOINT = os.environ["COSMOS_ENDPOINT"]
-COSMOS_KEY = os.environ["COSMOS_KEY"]
-DATABASE_NAME = "your_database"
-CONTAINER_NAME = "users"
+def find_user_by_email(email):
+    """Search the users container for a document where email matches."""
+    results = list(container.query_items(
+        query="SELECT * FROM c WHERE c.email = @email",
+        parameters=[{"name": "@email", "value": email}],
+        enable_cross_partition_query=True
+    ))
+    # returns the user dict if found, or None if not found
+    return results[0] if results else None
 
-# Initialize Cosmos DB
-client = CosmosClient(COSMOS_ENDPOINT, credential=COSMOS_KEY)
-database = client.get_database_client(DATABASE_NAME)
-container = database.get_container_client(CONTAINER_NAME)
 
-class User(UserMixin):
-    def __init__(self, id, username, email, password):
-        self.id = id
-        self.username = username
-        self.email = email
-        self.password = password
-
-    @staticmethod
-    def get(user_id):
-        try:
-            user_data = container.read_item(
-                item=str(user_id),
-                partition_key=str(user_id)
-            )
-
-            return User(
-                id=user_data["id"],
-                username=user_data["username"],
-                email=user_data["email"],
-                password=user_data["password"]
-            )
-
-        except exceptions.CosmosResourceNotFoundError:
-            return None
-
-@login_manager.user_loader
-def load_user(user_id):
-    return User.get(user_id)
+def create_user(vorname, nachname, email, hashed_password):
+    """Save a new user document to Cosmos DB."""
+    container.upsert_item({
+        "id":       str(uuid.uuid4()),  # random unique ID for each user
+        "vorname":  vorname,
+        "nachname": nachname,
+        "email":    email,
+        "password": hashed_password     # already hashed, never plain text
+    })

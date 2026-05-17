@@ -6,17 +6,30 @@ import MeineFinanzen from './pages/MeineFinanzen'
 import Prognosen from './pages/Prognosen'
 import FinanzSzenarien from './pages/FinanzSzenarien'
 import Layout from './components/Layout'
+import PrivateRoute from './components/PrivateRoute'
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Public routes — anyone can visit */}
         <Route path="/" element={<Login />} />
         <Route path="/registrieren" element={<Register />} />
-        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-        <Route path="/finanzen" element={<Layout><MeineFinanzen /></Layout>} />
-        <Route path="/prognosen" element={<Layout><Prognosen /></Layout>} />
-        <Route path="/szenarien" element={<Layout><FinanzSzenarien /></Layout>} />
+
+        {/* Protected routes — only logged-in users can visit */}
+        <Route path="/dashboard" element={
+          <PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>
+        } />
+        <Route path="/finanzen" element={
+          <PrivateRoute><Layout><MeineFinanzen /></Layout></PrivateRoute>
+        } />
+        <Route path="/prognosen" element={
+          <PrivateRoute><Layout><Prognosen /></Layout></PrivateRoute>
+        } />
+        <Route path="/szenarien" element={
+          <PrivateRoute><Layout><FinanzSzenarien /></Layout></PrivateRoute>
+        } />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>

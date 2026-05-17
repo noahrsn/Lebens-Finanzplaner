@@ -1,6 +1,59 @@
-import { Link } from 'react-router-dom'
+import { useState } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 
 function Register() {
+  // useNavigate lets us redirect the user after successful registration
+  const navigate = useNavigate()
+
+  // One state object for all form fields
+  const [form, setForm] = useState({
+    vorname: '', nachname: '', email: '', password: ''
+  })
+
+  // error = red message shown under the form
+  // success = green message shown when registration works
+  // loading = true while waiting for the server response
+  const [error,   setError]   = useState('')
+  const [success, setSuccess] = useState('')
+  const [loading, setLoading] = useState(false)
+
+  // Called on every keystroke — updates only the field that changed
+  function handleChange(e) {
+    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  async function handleSubmit(e) {
+    e.preventDefault() // stop the browser from reloading the page
+    setError('')
+    setSuccess('')
+    setLoading(true)
+
+    try {
+      // Send the form data as JSON to the Flask backend
+      const response = await fetch('http://localhost:5000/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        // Server returned an error (e.g. email already taken)
+        setError(data.error)
+      } else {
+        // Registration worked — show success then go to login
+        setSuccess('Konto erfolgreich erstellt! Du wirst weitergeleitet...')
+        setTimeout(() => navigate('/'), 2000)
+      }
+    } catch (err) {
+      // Network error — Flask server probably not running
+      setError('Server nicht erreichbar. Bitte versuche es später.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen flex">
       {/* ===== LEFT SIDE ===== */}
@@ -8,7 +61,6 @@ function Register() {
         <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-slate-800/60"></div>
         <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-emerald-900/40"></div>
 
-        {/* Logo */}
         <div className="relative flex items-center gap-3">
           <div className="w-12 h-12 rounded-xl bg-emerald-500 flex items-center justify-center">
             <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24">
@@ -21,7 +73,6 @@ function Register() {
           </div>
         </div>
 
-        {/* Tagline */}
         <div className="relative">
           <h2 className="text-5xl font-bold leading-tight mb-6">
             Deine Finanzen.<br />
@@ -33,7 +84,6 @@ function Register() {
           </p>
         </div>
 
-        {/* Stats */}
         <div className="relative flex gap-12">
           <div>
             <div className="text-2xl font-bold text-emerald-500">30+</div>
@@ -50,34 +100,54 @@ function Register() {
         </div>
       </div>
 
-      {/* ===== RIGHT SIDE — register form ===== */}
+      {/* ===== RIGHT SIDE ===== */}
       <div className="flex-1 bg-stone-50 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
           <h2 className="text-3xl font-bold text-slate-900 mb-2">Konto erstellen</h2>
           <p className="text-slate-500 mb-8">Erstelle dein kostenloses Konto.</p>
 
-          <form className="space-y-5">
-            {/* Vorname + Nachname side by side */}
+          {/* Error message — only shown when error is not empty */}
+          {error && (
+            <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
+              {error}
+            </div>
+          )}
+
+          {/* Success message */}
+          {success && (
+            <div className="mb-5 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-600 text-sm rounded-lg">
+              {success}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Vorname + Nachname */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor="vorname" className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
                   VORNAME
                 </label>
                 <input
-                  id="vorname"
+                  name="vorname"
                   type="text"
                   placeholder="Max"
+                  value={form.vorname}
+                  onChange={handleChange}
+                  required
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
               <div>
-                <label htmlFor="nachname" className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
+                <label className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
                   NACHNAME
                 </label>
                 <input
-                  id="nachname"
+                  name="nachname"
                   type="text"
                   placeholder="Mustermann"
+                  value={form.nachname}
+                  onChange={handleChange}
+                  required
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
@@ -85,36 +155,43 @@ function Register() {
 
             {/* Email */}
             <div>
-              <label htmlFor="email" className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
                 E-MAIL-ADRESSE
               </label>
               <input
-                id="email"
+                name="email"
                 type="email"
                 placeholder="deine@email.de"
+                value={form.email}
+                onChange={handleChange}
+                required
                 className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
 
             {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
+              <label className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
                 PASSWORT
               </label>
               <input
-                id="password"
+                name="password"
                 type="password"
                 placeholder="Mindestens 6 Zeichen"
+                value={form.password}
+                onChange={handleChange}
+                required
                 className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
 
-            {/* Submit */}
+            {/* Submit button — shows "Lädt..." while waiting */}
             <button
               type="submit"
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold py-3 rounded-lg transition-colors"
+              disabled={loading}
+              className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white font-semibold py-3 rounded-lg transition-colors"
             >
-              Registrieren
+              {loading ? 'Wird gespeichert...' : 'Registrieren'}
             </button>
           </form>
 
