@@ -3,6 +3,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import MeineFinanzen from './pages/MeineFinanzen'
 import Prognosen from './pages/Prognosen'
+import FinanzSzenarien from './pages/FinanzSzenarien'
 import Layout from './components/Layout'
 
 function App() {
@@ -13,6 +14,7 @@ function App() {
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/finanzen" element={<Layout><MeineFinanzen /></Layout>} />
         <Route path="/prognosen" element={<Layout><Prognosen /></Layout>} />
+        <Route path="/szenarien" element={<Layout><FinanzSzenarien /></Layout>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
