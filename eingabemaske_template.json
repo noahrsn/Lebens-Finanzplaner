@@ -1,0 +1,64 @@
+{
+  "benutzer": {
+    "email": "beispiel@email.de",
+    "passwort_hash": "$2a$10$abcdefghijklmnopqrstuv",
+    "name": "Mustermann",
+    "vorname": "Max",
+    "geburtsdatum": "1990-01-01"
+  },
+  "einnahmen_und_ausgaben": {
+    "monatliches_netto_gehalt": 3500.00,
+    "monatliche_fixkosten": 1200.00,
+    "monatliche_variable_ausgaben": 800.00,
+    "sparraten": {
+      "gesamt_monatlich": 500.00,
+      "aufteilung": {
+        "depot": 400.00,
+        "tagesgeld": 100.00
+      }
+    }
+  },
+  "altersvorsorge": {
+    "geplantes_renteneintrittsalter": 67,
+    "aktuelle_rentenpunkte": 12.5,
+    "erwartete_rentenpunkte_bei_eintritt": 55.0
+  },
+  "konten_und_vermoegenswerte": {
+    "girokonto_stand": 2500.00,
+    "tagesgeld_stand": 15000.00,
+    "ruecklagen": 5000.00,
+    "depot_wertpapiere": 45000.00,
+    "versicherungsvertraege_wert": 12000.00
+  },
+  "ziele_und_wuensche": [
+    {
+      "titel": "Eigenkapital Hauskauf",
+      "zielbetrag": 80000.00,
+      "aktueller_fortschritt": 15000.00,
+      "zieldatum_jahr": 2030
+    },
+    {
+      "titel": "Weltreise",
+      "zielbetrag": 15000.00,
+      "aktueller_fortschritt": 2000.00,
+      "zieldatum_jahr": 2028
+    }
+  ],
+  "szenarien_und_simulationen": {
+    "angenommene_inflation_prozent": 2,
+    "life_events": [
+      {
+        "ereignis_typ": "Familiengründung",
+        "eintrittsjahr": 2029,
+        "auswirkung_auf_ausgaben_monatlich": 600.00,
+        "auswirkung_auf_einkommen_monatlich": -400.00
+      },
+      {
+        "ereignis_typ": "Jobwechsel",
+        "eintrittsjahr": 2028,
+        "auswirkung_auf_ausgaben_monatlich": 0.00,
+        "auswirkung_auf_einkommen_monatlich": 800.00
+      }
+    ]
+  }
+}

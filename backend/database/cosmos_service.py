@@ -37,8 +37,11 @@ def write_item(item: dict, container_name: str = CONTAINER_NAME):
     Das Item sollte ein Dictionary sein und einen Schlüssel "id" enthalten (String).
     """
     client = get_cosmos_client()
-    db = client.get_database_client(DATABASE_NAME)
-    container = db.get_container_client(container_name)
+    db = client.create_database_if_not_exists(DATABASE_NAME)
+    container = db.create_container_if_not_exists(
+        id=container_name,
+        partition_key=PartitionKey(path="/id")
+    )
     return container.upsert_item(item)
 
 def read_item(item_id: str, partition_key: str, container_name: str = CONTAINER_NAME):
@@ -46,8 +49,11 @@ def read_item(item_id: str, partition_key: str, container_name: str = CONTAINER_
     Liest ein einzelnes Dokument anhand der ID und dem Partition Key (hier z.B. die ID).
     """
     client = get_cosmos_client()
-    db = client.get_database_client(DATABASE_NAME)
-    container = db.get_container_client(container_name)
+    db = client.create_database_if_not_exists(DATABASE_NAME)
+    container = db.create_container_if_not_exists(
+        id=container_name,
+        partition_key=PartitionKey(path="/id")
+    )
     return container.read_item(item=item_id, partition_key=partition_key)
 
 def query_items(query: str, parameters: list = None, container_name: str = CONTAINER_NAME):
@@ -55,8 +61,11 @@ def query_items(query: str, parameters: list = None, container_name: str = CONTA
     Führt ein Query über die Daten aus, z.B. "SELECT * FROM c WHERE c.userId = @userId"
     """
     client = get_cosmos_client()
-    db = client.get_database_client(DATABASE_NAME)
-    container = db.get_container_client(container_name)
+    db = client.create_database_if_not_exists(DATABASE_NAME)
+    container = db.create_container_if_not_exists(
+        id=container_name,
+        partition_key=PartitionKey(path="/id")
+    )
 
     return list(container.query_items(
         query=query,
