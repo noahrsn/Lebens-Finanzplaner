@@ -141,6 +141,47 @@ def patch_financial_profile_section(user_id, section_name, section_data):
     return save_financial_profile(user_id, updated)
 
 
+def _collect_changes(old, new, prefix=''):
+    changes = []
+    if not isinstance(new, dict) or not isinstance(old, dict):
+        if old != new:
+            changes.append({"field": prefix, "old": old, "new": new})
+        return changes
+    for key, new_val in new.items():
+        full_key = f"{prefix}.{key}" if prefix else key
+        old_val = old.get(key)
+        changes.extend(_collect_changes(old_val, new_val, full_key))
+    return changes
+
+
+def update_financial_profile_with_log(user_id, updated_sections):
+    existing = get_financial_profile(user_id)
+    if not existing:
+        raise LookupError("Finanzprofil nicht gefunden.")
+
+    merged = deepcopy(existing)
+    for section in PROFILE_SECTIONS:
+        if section in updated_sections:
+            merged[section] = updated_sections[section]
+
+    validate_financial_profile(merged)
+
+    changes = []
+    for section in PROFILE_SECTIONS:
+        if section in updated_sections:
+            changes.extend(
+                _collect_changes(existing.get(section, {}), updated_sections[section], section)
+            )
+
+    if changes:
+        log = list(merged.get("change_log", []))
+        log.append({"timestamp": _now_iso(), "changes": changes})
+        merged["change_log"] = log
+
+    merged["updatedAt"] = _now_iso()
+    return write_item(merged, container_name=CONTAINER_NAME)
+
+
 def add_goal(user_id, goal_data):
     _require_mapping(goal_data, "Ziel")
     for field in ("titel", "zielbetrag", "aktueller_fortschritt", "zieldatum_jahr"):

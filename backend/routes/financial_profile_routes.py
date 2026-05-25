@@ -6,6 +6,7 @@ from database.financial_profile_service import (
     get_financial_profile,
     patch_financial_profile_section,
     save_financial_profile,
+    update_financial_profile_with_log,
 )
 
 
@@ -45,6 +46,24 @@ def upsert_profile():
 
     try:
         profile = save_financial_profile(_current_user_id(), data)
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify(profile), 200
+
+
+@financial_profile_bp.route("/api/financial-profile", methods=["PATCH"])
+def update_profile_with_log():
+    unauthorized = _require_login()
+    if unauthorized:
+        return unauthorized
+
+    data = request.get_json(silent=True) or {}
+
+    try:
+        profile = update_financial_profile_with_log(_current_user_id(), data)
+    except LookupError as exc:
+        return jsonify({"error": str(exc)}), 404
     except ValueError as exc:
         return jsonify({"error": str(exc)}), 400
 
