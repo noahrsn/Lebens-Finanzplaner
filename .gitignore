@@ -15,3 +15,5 @@ env/
 
 # Azure
 .azure/
+
+node_modules/
