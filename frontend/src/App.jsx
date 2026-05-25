@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import Eingabe from './pages/Eingabe'
 import Dashboard from './pages/Dashboard'
 import MeineFinanzen from './pages/MeineFinanzen'
 import Prognosen from './pages/Prognosen'
@@ -17,6 +18,9 @@ function App() {
         <Route path="/registrieren" element={<Register />} />
 
         {/* Protected routes — only logged-in users can visit */}
+        <Route path="/eingabe" element={
+          <PrivateRoute><Eingabe /></PrivateRoute>
+        } />
         <Route path="/dashboard" element={
           <PrivateRoute><Layout><Dashboard /></Layout></PrivateRoute>
         } />

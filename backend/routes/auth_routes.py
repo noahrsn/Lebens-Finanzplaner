@@ -43,9 +43,11 @@ def login():
     if not user or not bcrypt.check_password_hash(user["password"], password):
         return jsonify({"error": "E-Mail oder Passwort falsch."}), 401
 
-    session["user_id"] = user["id"]
-    session["email"]   = user["email"]
-    session["vorname"] = user["vorname"]
+    session["user_id"]      = user["id"]
+    session["email"]        = user["email"]
+    session["vorname"]      = user["vorname"]
+    session["nachname"]     = user.get("nachname", "")
+    session["geburtsdatum"] = user.get("geburtsdatum", "")
 
     return jsonify({
         "message": "Anmeldung erfolgreich.",

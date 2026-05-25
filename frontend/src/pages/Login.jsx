@@ -28,11 +28,12 @@ function Login() {
       const data = await response.json()
 
       if (!response.ok) {
-        // Wrong email or password
         setError(data.error)
       } else {
-        // Login worked — go to dashboard
-        navigate('/dashboard')
+        const profileRes = await fetch('http://localhost:5000/api/financial-profile', {
+          credentials: 'include',
+        })
+        navigate(profileRes.ok ? '/dashboard' : '/eingabe')
       }
     } catch (err) {
       setError('Server nicht erreichbar. Bitte versuche es später.')

@@ -14,7 +14,9 @@ def me():
         return jsonify({"error": "Nicht angemeldet."}), 401
 
     return jsonify({
-        "vorname": session.get("vorname"),
-        "email":   session.get("email"),
+        "vorname":      session.get("vorname"),
+        "nachname":     session.get("nachname"),
+        "email":        session.get("email"),
+        "geburtsdatum": session.get("geburtsdatum"),
     }), 200
 
