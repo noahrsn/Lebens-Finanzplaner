@@ -22,8 +22,8 @@ def register():
     if find_user_by_email(email):
         return jsonify({"error": "Diese E-Mail-Adresse ist bereits registriert."}), 409
 
-    hashed = bcrypt.generate_password_hash(password).decode("utf-8")
-    create_user(vorname, nachname, email, hashed)
+    #hashed = bcrypt.generate_password_hash(password).decode("utf-8")
+    create_user(vorname, nachname, email, password)
 
     return jsonify({"message": "Registrierung erfolgreich."}), 201
 

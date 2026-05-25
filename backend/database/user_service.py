@@ -1,5 +1,6 @@
 import uuid
 from .cosmos_service import query_items, write_item
+from config import bcrypt
 
 def find_user_by_email(email):
     """Search the users container for a document where email matches."""
@@ -8,14 +9,15 @@ def find_user_by_email(email):
     results = query_items(query, parameters=params, container_name="users")
     return results[0] if results else None
 
-def create_user(vorname, nachname, email, hashed_password):
+def create_user(vorname, nachname, email, password):
     """Save a new user document to Cosmos DB."""
+    hashed = bcrypt.generate_password_hash(password).decode("utf-8")
     new_user = {
         "id": str(uuid.uuid4()),
         "vorname": vorname,
         "nachname": nachname,
         "email": email,
-        "password": hashed_password
+        "password": hashed
     }
     write_item(new_user, container_name="users")
 
