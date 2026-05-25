@@ -9,13 +9,14 @@ def find_user_by_email(email):
     results = query_items(query, parameters=params, container_name="users")
     return results[0] if results else None
 
-def create_user(vorname, nachname, email, password):
+def create_user(vorname, nachname, geburtsdatum, email, password):
     """Save a new user document to Cosmos DB."""
     hashed = bcrypt.generate_password_hash(password).decode("utf-8")
     new_user = {
         "id": str(uuid.uuid4()),
         "vorname": vorname,
         "nachname": nachname,
+        "geburtsdatum": geburtsdatum,
         "email": email,
         "password": hashed
     }

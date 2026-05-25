@@ -8,12 +8,13 @@ auth_bp = Blueprint('auth', __name__)
 def register():
     data = request.get_json()
 
-    vorname  = data.get("vorname",  "").strip()
-    nachname = data.get("nachname", "").strip()
-    email    = data.get("email",    "").strip().lower()
-    password = data.get("password", "")
+    vorname      = data.get("vorname",      "").strip()
+    nachname     = data.get("nachname",     "").strip()
+    geburtsdatum = data.get("geburtsdatum", "").strip()
+    email        = data.get("email",        "").strip().lower()
+    password     = data.get("password",     "")
 
-    if not vorname or not nachname or not email or not password:
+    if not vorname or not nachname or not geburtsdatum or not email or not password:
         return jsonify({"error": "Alle Felder sind erforderlich."}), 400
 
     if len(password) < 6:
@@ -22,8 +23,7 @@ def register():
     if find_user_by_email(email):
         return jsonify({"error": "Diese E-Mail-Adresse ist bereits registriert."}), 409
 
-    #hashed = bcrypt.generate_password_hash(password).decode("utf-8")
-    create_user(vorname, nachname, email, password)
+    create_user(vorname, nachname, geburtsdatum, email, password)
 
     return jsonify({"message": "Registrierung erfolgreich."}), 201
 

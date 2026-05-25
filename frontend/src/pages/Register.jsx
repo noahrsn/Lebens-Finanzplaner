@@ -7,7 +7,7 @@ function Register() {
 
   // One state object for all form fields
   const [form, setForm] = useState({
-    vorname: '', nachname: '', email: '', password: ''
+    vorname: '', nachname: '', geburtsdatum: '', email: '', password: ''
   })
 
   // error = red message shown under the form
@@ -151,6 +151,24 @@ function Register() {
                   className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 />
               </div>
+            </div>
+
+            {/* Geburtsdatum */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
+                GEBURTSDATUM
+              </label>
+              <input
+                name="geburtsdatum"
+                type="text"
+                placeholder="TT/MM/JJJJ"
+                value={form.geburtsdatum}
+                onChange={handleChange}
+                pattern="\d{2}/\d{2}/\d{4}"
+                title="Bitte im Format TT/MM/JJJJ eingeben"
+                required
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              />
             </div>
 
             {/* Email */}
