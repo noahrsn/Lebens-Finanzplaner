@@ -1,0 +1,182 @@
+from copy import deepcopy
+from datetime import datetime, timezone
+import uuid
+
+from azure.cosmos.exceptions import CosmosResourceNotFoundError
+
+from .cosmos_service import read_item, write_item
+
+
+CONTAINER_NAME = "financial_profiles"
+
+PROFILE_SECTIONS = (
+    "benutzer",
+    "einnahmen_und_ausgaben",
+    "altersvorsorge",
+    "konten_und_vermoegenswerte",
+    "ziele_und_wuensche",
+    "szenarien_und_simulationen",
+)
+
+REQUIRED_SECTION_FIELDS = {
+    "benutzer": ("email", "name", "vorname", "geburtsdatum"),
+    "einnahmen_und_ausgaben": (
+        "monatliches_netto_gehalt",
+        "monatliche_fixkosten",
+        "monatliche_variable_ausgaben",
+        "sparraten",
+    ),
+    "altersvorsorge": (
+        "geplantes_renteneintrittsalter",
+        "aktuelle_rentenpunkte",
+        "erwartete_rentenpunkte_bei_eintritt",
+    ),
+    "konten_und_vermoegenswerte": (
+        "girokonto_stand",
+        "tagesgeld_stand",
+        "ruecklagen",
+        "depot_wertpapiere",
+        "versicherungsvertraege_wert",
+    ),
+    "szenarien_und_simulationen": ("angenommene_inflation_prozent", "life_events"),
+}
+
+
+def _now_iso():
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _profile_id(user_id):
+    return f"financial-profile:{user_id}"
+
+
+def _require_mapping(data, field_name):
+    if not isinstance(data, dict):
+        raise ValueError(f"{field_name} muss ein Objekt sein.")
+
+
+def validate_financial_profile(data):
+    _require_mapping(data, "Profil")
+
+    missing_sections = [section for section in PROFILE_SECTIONS if section not in data]
+    if missing_sections:
+        raise ValueError(f"Fehlende Bereiche: {', '.join(missing_sections)}.")
+
+    for section, fields in REQUIRED_SECTION_FIELDS.items():
+        _require_mapping(data.get(section), section)
+        missing_fields = [field for field in fields if field not in data[section]]
+        if missing_fields:
+            raise ValueError(
+                f"Fehlende Felder in {section}: {', '.join(missing_fields)}."
+            )
+
+    sparraten = data["einnahmen_und_ausgaben"]["sparraten"]
+    _require_mapping(sparraten, "sparraten")
+    if "gesamt_monatlich" not in sparraten or "aufteilung" not in sparraten:
+        raise ValueError("sparraten braucht gesamt_monatlich und aufteilung.")
+    _require_mapping(sparraten["aufteilung"], "sparraten.aufteilung")
+
+    goals = data["ziele_und_wuensche"]
+    if not isinstance(goals, list):
+        raise ValueError("ziele_und_wuensche muss eine Liste sein.")
+    for goal in goals:
+        _require_mapping(goal, "Ziel")
+        for field in ("titel", "zielbetrag", "aktueller_fortschritt", "zieldatum_jahr"):
+            if field not in goal:
+                raise ValueError(f"Ziel braucht das Feld {field}.")
+
+    life_events = data["szenarien_und_simulationen"]["life_events"]
+    if not isinstance(life_events, list):
+        raise ValueError("life_events muss eine Liste sein.")
+    for event in life_events:
+        _require_mapping(event, "Life Event")
+        for field in (
+            "ereignis_typ",
+            "eintrittsjahr",
+            "auswirkung_auf_ausgaben_monatlich",
+            "auswirkung_auf_einkommen_monatlich",
+        ):
+            if field not in event:
+                raise ValueError(f"Life Event braucht das Feld {field}.")
+
+
+def get_financial_profile(user_id):
+    try:
+        return read_item(
+            item_id=_profile_id(user_id),
+            partition_key=_profile_id(user_id),
+            container_name=CONTAINER_NAME,
+        )
+    except CosmosResourceNotFoundError:
+        return None
+
+
+def save_financial_profile(user_id, profile_data):
+    validate_financial_profile(profile_data)
+
+    existing = get_financial_profile(user_id)
+    timestamp = _now_iso()
+    document = {
+        "id": existing["id"] if existing else _profile_id(user_id),
+        "userId": user_id,
+        "type": "financial_profile",
+        "createdAt": existing.get("createdAt", timestamp) if existing else timestamp,
+        "updatedAt": timestamp,
+        **deepcopy(profile_data),
+    }
+
+    return write_item(document, container_name=CONTAINER_NAME)
+
+
+def patch_financial_profile_section(user_id, section_name, section_data):
+    if section_name not in PROFILE_SECTIONS:
+        raise ValueError("Unbekannter Profilbereich.")
+
+    profile = get_financial_profile(user_id)
+    if not profile:
+        raise LookupError("Finanzprofil wurde noch nicht angelegt.")
+
+    updated = {section: profile.get(section) for section in PROFILE_SECTIONS}
+    updated[section_name] = section_data
+    return save_financial_profile(user_id, updated)
+
+
+def add_goal(user_id, goal_data):
+    _require_mapping(goal_data, "Ziel")
+    for field in ("titel", "zielbetrag", "aktueller_fortschritt", "zieldatum_jahr"):
+        if field not in goal_data:
+            raise ValueError(f"Ziel braucht das Feld {field}.")
+
+    profile = get_financial_profile(user_id)
+    if not profile:
+        raise LookupError("Finanzprofil wurde noch nicht angelegt.")
+
+    goal = {"id": str(uuid.uuid4()), **goal_data}
+    goals = list(profile.get("ziele_und_wuensche", []))
+    goals.append(goal)
+    patch_financial_profile_section(user_id, "ziele_und_wuensche", goals)
+    return goal
+
+
+def add_life_event(user_id, event_data):
+    _require_mapping(event_data, "Life Event")
+    for field in (
+        "ereignis_typ",
+        "eintrittsjahr",
+        "auswirkung_auf_ausgaben_monatlich",
+        "auswirkung_auf_einkommen_monatlich",
+    ):
+        if field not in event_data:
+            raise ValueError(f"Life Event braucht das Feld {field}.")
+
+    profile = get_financial_profile(user_id)
+    if not profile:
+        raise LookupError("Finanzprofil wurde noch nicht angelegt.")
+
+    event = {"id": str(uuid.uuid4()), **event_data}
+    simulations = deepcopy(profile.get("szenarien_und_simulationen", {}))
+    life_events = list(simulations.get("life_events", []))
+    life_events.append(event)
+    simulations["life_events"] = life_events
+    patch_financial_profile_section(user_id, "szenarien_und_simulationen", simulations)
+    return event

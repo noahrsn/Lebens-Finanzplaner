@@ -6,6 +6,7 @@ from flask import Flask, request, jsonify, session
 from flask_cors import CORS
 from config import bcrypt
 from routes.auth_routes import auth_bp
+from routes.financial_profile_routes import financial_profile_bp
 from routes.user_routes import user_bp
 
 app = Flask(__name__)
@@ -23,6 +24,7 @@ bcrypt.init_app(app)
 # Register Blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(user_bp)
+app.register_blueprint(financial_profile_bp)
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
