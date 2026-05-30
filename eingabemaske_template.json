@@ -8,6 +8,7 @@
   },
   "einnahmen_und_ausgaben": {
     "monatliches_netto_gehalt": 3500.00,
+    "angenommene_gehaltssteigerung_pro_jahr_prozent": 2,
     "monatliche_fixkosten": 1200.00,
     "monatliche_variable_ausgaben": 800.00,
     "sparraten": {
