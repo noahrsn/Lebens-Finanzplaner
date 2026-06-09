@@ -1,6 +1,7 @@
 import uuid
 from .cosmos_service import query_items, write_item
 from config import bcrypt
+from datetime import datetime, timezone
 
 def find_user_by_email(email):
     """Search the users container for a document where email matches."""
@@ -27,4 +28,21 @@ def get_all_users():
     query = "SELECT c.id, c.vorname, c.nachname, c.email FROM c"
     return query_items(query, container_name="users")
 
+def update_user(user):
+    return write_item(user, container_name="users")
 
+def set_password_reset_token(user, token_hash, expires_at):
+    user["passwordResetTokenHash"] = token_hash
+    user["passwordResetExpiresAt"] = expires_at
+    return update_user(user)
+
+def clear_password_reset_token(user):
+    user.pop("passwordResetTokenHash", None)
+    user.pop("passwordResetExpiresAt", None)
+    return update_user(user)
+
+def update_password(user, new_password):
+    user["password"] = bcrypt.generate_password_hash(new_password).decode("utf-8")
+    user.pop("passwordResetTokenHash", None)
+    user.pop("passwordResetExpiresAt", None)
+    return update_user(user)

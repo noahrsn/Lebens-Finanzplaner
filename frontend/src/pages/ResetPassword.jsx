@@ -1,39 +1,48 @@
 import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 
-function Login() {
+function ResetPassword() {
   const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const token = searchParams.get('token') || ''
 
-  const [form, setForm] = useState({ email: '', password: '' })
-  const [error,   setError]   = useState('')
+  const [password, setPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
-
-  function handleChange(e) {
-    setForm(prev => ({ ...prev, [e.target.name]: e.target.value }))
-  }
 
   async function handleSubmit(e) {
     e.preventDefault()
     setError('')
+    setMessage('')
+
+    if (!token) {
+      setError('Reset-Token fehlt.')
+      return
+    }
+
+    if (password !== confirmPassword) {
+      setError('Die Passwörter stimmen nicht überein.')
+      return
+    }
+
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      const response = await fetch('http://localhost:5000/api/reset-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include', // needed so Flask can set the session cookie
-        body: JSON.stringify(form),
+        body: JSON.stringify({ token, password }),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
-        setError(data.error)
+        setError(data.error || 'Passwort konnte nicht aktualisiert werden.')
       } else {
-        const profileRes = await fetch('http://localhost:5000/api/financial-profile', {
-          credentials: 'include',
-        })
-        navigate(profileRes.ok ? '/dashboard' : '/eingabe')
+        setMessage(data.message || 'Passwort wurde aktualisiert.')
+        setTimeout(() => navigate('/'), 1800)
       }
     } catch (err) {
       setError('Server nicht erreichbar. Bitte versuche es später.')
@@ -44,7 +53,6 @@ function Login() {
 
   return (
     <div className="min-h-screen flex">
-      {/* ===== LEFT SIDE ===== */}
       <div className="hidden lg:flex lg:w-2/5 bg-slate-900 text-white p-12 flex-col justify-between relative overflow-hidden">
         <div className="absolute -top-24 -left-24 w-72 h-72 rounded-full bg-slate-800/60"></div>
         <div className="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-emerald-900/40"></div>
@@ -63,96 +71,81 @@ function Login() {
 
         <div className="relative">
           <h2 className="text-5xl font-bold leading-tight mb-6">
-            Deine Finanzen.<br />
-            Dein Leben.<br />
-            <span className="text-emerald-500">Geplant.</span>
+            Neues Passwort.<br />
+            Neuer Zugang.
           </h2>
           <p className="text-slate-400 text-sm max-w-sm">
-            Vermögensprojektionen, Ziel-Tracking und KI-Beratung — alles in einer Übersicht.
+            Nach dem Speichern kannst du dich direkt mit deinem neuen Passwort anmelden.
           </p>
         </div>
 
-        <div className="relative flex gap-12">
-          <div>
-            <div className="text-2xl font-bold text-emerald-500">30+</div>
-            <div className="text-xs text-slate-400">Jahre Prognose</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-emerald-500">4</div>
-            <div className="text-xs text-slate-400">Szenarien</div>
-          </div>
-          <div>
-            <div className="text-2xl font-bold text-emerald-500">KI</div>
-            <div className="text-xs text-slate-400">Assistent</div>
-          </div>
+        <div className="relative text-sm text-slate-400">
+          Wähle mindestens 6 Zeichen.
         </div>
       </div>
 
-      {/* ===== RIGHT SIDE ===== */}
       <div className="flex-1 bg-stone-50 flex items-center justify-center p-8">
         <div className="w-full max-w-md">
-          <h2 className="text-3xl font-bold text-slate-900 mb-2">Willkommen zurück</h2>
-          <p className="text-slate-500 mb-8">Melde dich an, um weiterzumachen.</p>
+          <h2 className="text-3xl font-bold text-slate-900 mb-2">Passwort zurücksetzen</h2>
+          <p className="text-slate-500 mb-8">Lege ein neues Passwort für dein Konto fest.</p>
 
-          {/* Error message */}
           {error && (
             <div className="mb-5 px-4 py-3 bg-red-50 border border-red-200 text-red-600 text-sm rounded-lg">
               {error}
             </div>
           )}
 
+          {message && (
+            <div className="mb-5 px-4 py-3 bg-emerald-50 border border-emerald-200 text-emerald-600 text-sm rounded-lg">
+              {message}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email */}
             <div>
               <label className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
-                E-MAIL-ADRESSE
+                NEUES PASSWORT
               </label>
-              <input
-                name="email"
-                type="email"
-                placeholder="deine@email.de"
-                value={form.email}
-                onChange={handleChange}
-                required
-                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
-              />
-            </div>
-
-            {/* Password */}
-            <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-xs font-semibold text-slate-500 tracking-wider">
-                  PASSWORT
-                </label>
-                <Link to="/passwort-vergessen" className="text-xs font-semibold text-emerald-600 hover:text-emerald-700">
-                  Vergessen?
-                </Link>
-              </div>
               <input
                 name="password"
                 type="password"
                 placeholder="Mindestens 6 Zeichen"
-                value={form.password}
-                onChange={handleChange}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                minLength={6}
                 required
                 className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
               />
             </div>
 
-            {/* Submit */}
+            <div>
+              <label className="block text-xs font-semibold text-slate-500 tracking-wider mb-2">
+                PASSWORT BESTÄTIGEN
+              </label>
+              <input
+                name="confirmPassword"
+                type="password"
+                placeholder="Noch einmal eingeben"
+                value={confirmPassword}
+                onChange={e => setConfirmPassword(e.target.value)}
+                minLength={6}
+                required
+                className="w-full px-4 py-3 bg-white border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+              />
+            </div>
+
             <button
               type="submit"
-              disabled={loading}
+              disabled={loading || !token}
               className="w-full bg-emerald-500 hover:bg-emerald-600 disabled:opacity-60 text-white font-semibold py-3 rounded-lg transition-colors"
             >
-              {loading ? 'Wird angemeldet...' : 'Anmelden'}
+              {loading ? 'Wird gespeichert...' : 'Passwort speichern'}
             </button>
           </form>
 
           <p className="text-center text-sm text-slate-500 mt-6">
-            Noch kein Konto?{' '}
-            <Link to="/registrieren" className="text-emerald-600 hover:text-emerald-700 font-semibold">
-              Jetzt registrieren
+            <Link to="/" className="text-emerald-600 hover:text-emerald-700 font-semibold">
+              Zur Anmeldung
             </Link>
           </p>
         </div>
@@ -161,4 +154,4 @@ function Login() {
   )
 }
 
-export default Login
+export default ResetPassword

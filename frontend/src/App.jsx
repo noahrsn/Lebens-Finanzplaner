@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import Login from './pages/Login'
 import Register from './pages/Register'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
 import Eingabe from './pages/Eingabe'
 import Dashboard from './pages/Dashboard'
 import MeineFinanzen from './pages/MeineFinanzen'
@@ -16,6 +18,8 @@ function App() {
         {/* Public routes — anyone can visit */}
         <Route path="/" element={<Login />} />
         <Route path="/registrieren" element={<Register />} />
+        <Route path="/passwort-vergessen" element={<ForgotPassword />} />
+        <Route path="/passwort-zuruecksetzen" element={<ResetPassword />} />
 
         {/* Protected routes — only logged-in users can visit */}
         <Route path="/eingabe" element={
