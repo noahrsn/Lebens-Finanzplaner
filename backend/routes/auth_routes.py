@@ -6,7 +6,7 @@ import hashlib
 from datetime import datetime, timedelta, timezone
 from database.email_service import send_password_reset_email
 from database.user_service import find_user_by_email, create_user, set_password_reset_token, update_password
-from database.cosmos_service import query_items
+from database.supabase_service import get_supabase_client
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -115,14 +115,15 @@ def reset_password():
 
     token_hash = _hash_token(token)
 
-    query = "SELECT * FROM c WHERE c.passwordResetTokenHash = @tokenHash"
-    params = [{"name": "@tokenHash", "value": token_hash}]
-    users = query_items(query, parameters=params, container_name="users")
+    client = get_supabase_client()
+    res = client.table("users").select("*").eq("data->>passwordResetTokenHash", token_hash).execute()
 
-    if not users:
+    if not res.data:
         return jsonify({"error": "Reset-Link ist ungültig oder abgelaufen."}), 400
 
-    user = users[0]
+    user = res.data[0]["data"]
+    user["id"] = res.data[0]["id"]
+
     expires_at = datetime.fromisoformat(user["passwordResetExpiresAt"])
 
     if expires_at < datetime.now(timezone.utc):
