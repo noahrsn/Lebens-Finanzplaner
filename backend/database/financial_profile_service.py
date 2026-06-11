@@ -2,10 +2,7 @@ from copy import deepcopy
 from datetime import datetime, timezone
 import uuid
 
-from azure.cosmos.exceptions import CosmosResourceNotFoundError
-
-from .cosmos_service import read_item, write_item
-
+from .supabase_service import get_supabase_client
 
 CONTAINER_NAME = "financial_profiles"
 
@@ -101,14 +98,13 @@ def validate_financial_profile(data):
 
 
 def get_financial_profile(user_id):
-    try:
-        return read_item(
-            item_id=_profile_id(user_id),
-            partition_key=_profile_id(user_id),
-            container_name=CONTAINER_NAME,
-        )
-    except CosmosResourceNotFoundError:
-        return None
+    client = get_supabase_client()
+    res = client.table(CONTAINER_NAME).select("*").eq("id", _profile_id(user_id)).execute()
+    if res.data:
+        doc = res.data[0]["data"]
+        doc["id"] = res.data[0]["id"]
+        return doc
+    return None
 
 
 def save_financial_profile(user_id, profile_data):
@@ -116,8 +112,9 @@ def save_financial_profile(user_id, profile_data):
 
     existing = get_financial_profile(user_id)
     timestamp = _now_iso()
+    doc_id = existing["id"] if existing else _profile_id(user_id)
     document = {
-        "id": existing["id"] if existing else _profile_id(user_id),
+        "id": doc_id,
         "userId": user_id,
         "type": "financial_profile",
         "createdAt": existing.get("createdAt", timestamp) if existing else timestamp,
@@ -125,7 +122,9 @@ def save_financial_profile(user_id, profile_data):
         **deepcopy(profile_data),
     }
 
-    return write_item(document, container_name=CONTAINER_NAME)
+    client = get_supabase_client()
+    client.table(CONTAINER_NAME).upsert({"id": doc_id, "data": document}).execute()
+    return document
 
 
 def patch_financial_profile_section(user_id, section_name, section_data):
@@ -179,7 +178,9 @@ def update_financial_profile_with_log(user_id, updated_sections):
         merged["change_log"] = log
 
     merged["updatedAt"] = _now_iso()
-    return write_item(merged, container_name=CONTAINER_NAME)
+    client = get_supabase_client()
+    client.table(CONTAINER_NAME).upsert({"id": merged["id"], "data": merged}).execute()
+    return merged
 
 
 def add_goal(user_id, goal_data):
