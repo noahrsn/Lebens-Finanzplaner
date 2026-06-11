@@ -9,7 +9,7 @@ export default function PrivateRoute({ children }) {
 
   useEffect(() => {
     // Ask Flask if there is an active session
-    fetch('http://localhost:5000/api/me', {
+    fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/me', {
       credentials: 'include', // send the session cookie with the request
     })
       .then(res => setStatus(res.ok))   // ok = 200 (logged in), not ok = 401

@@ -70,7 +70,7 @@ export default function Eingabe() {
   })
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/me', { credentials: 'include' })
+    fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/me', { credentials: 'include' })
       .then(r => r.json())
       .then(d => setUser(d))
       .catch(() => {})
@@ -130,7 +130,7 @@ export default function Eingabe() {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/financial-profile', {
+      const res = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/financial-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

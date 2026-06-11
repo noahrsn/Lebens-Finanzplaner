@@ -12,7 +12,7 @@ export default function Dashboard() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/financial-profile', { credentials: 'include' })
+    fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/financial-profile', { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { setProfile(data); setLoading(false) })
       .catch(() => setLoading(false))

@@ -70,7 +70,7 @@ export default function MeineFinanzen() {
   const [saved, setSaved]         = useState(false)
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/financial-profile', { credentials: 'include' })
+    fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/financial-profile', { credentials: 'include' })
       .then(r => r.json())
       .then(data => {
         setProfile(data)
@@ -111,7 +111,7 @@ export default function MeineFinanzen() {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/financial-profile', {
+      const res = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/financial-profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

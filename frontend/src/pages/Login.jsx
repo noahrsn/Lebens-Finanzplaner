@@ -18,7 +18,7 @@ function Login() {
     setLoading(true)
 
     try {
-      const response = await fetch('http://localhost:5000/api/login', {
+      const response = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include', // needed so Flask can set the session cookie
@@ -30,7 +30,7 @@ function Login() {
       if (!response.ok) {
         setError(data.error)
       } else {
-        const profileRes = await fetch('http://localhost:5000/api/financial-profile', {
+        const profileRes = await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/financial-profile', {
           credentials: 'include',
         })
         navigate(profileRes.ok ? '/dashboard' : '/eingabe')
