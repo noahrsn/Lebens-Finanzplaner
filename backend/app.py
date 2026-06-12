@@ -12,6 +12,8 @@ from routes.prognosen_routes import prognosen_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(32))
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
+app.config["SESSION_COOKIE_SECURE"] = True
 
 allowed_origins = [
     "http://localhost:5173",
