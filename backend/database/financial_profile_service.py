@@ -6,6 +6,52 @@ from .supabase_service import get_supabase_client
 
 CONTAINER_NAME = "financial_profiles"
 
+def _now_iso():
+    return datetime.now(timezone.utc).isoformat()
+
+# dummy data
+_MEMORY_DB = {
+    "financial-profile:test-user-id": {
+        "id": "financial-profile:test-user-id",
+        "userId": "test-user-id",
+        "type": "financial_profile",
+        "createdAt": _now_iso(),
+        "updatedAt": _now_iso(),
+        "benutzer": {
+            "email": "test@example.com",
+            "name": "User",
+            "vorname": "Test",
+            "geburtsdatum": "1990-01-01"
+        },
+        "einnahmen_und_ausgaben": {
+            "monatliches_netto_gehalt": 3200,
+            "monatliche_fixkosten": 1500,
+            "monatliche_variable_ausgaben": 600,
+            "sparraten": {
+                "gesamt_monatlich": 1100,
+                "aufteilung": {"tagesgeld": 600, "depot": 500}
+            }
+        },
+        "altersvorsorge": {
+            "geplantes_renteneintrittsalter": 67,
+            "aktuelle_rentenpunkte": 0,
+            "erwartete_rentenpunkte_bei_eintritt": 40
+        },
+        "konten_und_vermoegenswerte": {
+            "girokonto_stand": 2000,
+            "tagesgeld_stand": 6000,
+            "ruecklagen": 0,
+            "depot_wertpapiere": 18650,
+            "versicherungsvertraege_wert": 0
+        },
+        "ziele_und_wuensche": [],
+        "szenarien_und_simulationen": {
+            "angenommene_inflation_prozent": 2.0,
+            "life_events": []
+        }
+    }
+}
+
 PROFILE_SECTIONS = (
     "benutzer",
     "einnahmen_und_ausgaben",
@@ -37,10 +83,6 @@ REQUIRED_SECTION_FIELDS = {
     ),
     "szenarien_und_simulationen": ("angenommene_inflation_prozent", "life_events"),
 }
-
-
-def _now_iso():
-    return datetime.now(timezone.utc).isoformat()
 
 
 def _profile_id(user_id):
@@ -178,8 +220,7 @@ def update_financial_profile_with_log(user_id, updated_sections):
         merged["change_log"] = log
 
     merged["updatedAt"] = _now_iso()
-    client = get_supabase_client()
-    client.table(CONTAINER_NAME).upsert({"id": merged["id"], "data": merged}).execute()
+
     return merged
 
 
@@ -222,3 +263,4 @@ def add_life_event(user_id, event_data):
     simulations["life_events"] = life_events
     patch_financial_profile_section(user_id, "szenarien_und_simulationen", simulations)
     return event
+

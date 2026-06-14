@@ -5,6 +5,7 @@ from finance_math.calculator import (
     calc_monthly_cashflow,
     calc_net_worth,
     simulate_asset_growth,
+    evaluate_goals
 )
 
 prognosen_bp = Blueprint("prognosen", __name__)
@@ -44,11 +45,13 @@ def get_prognosen():
                 "ruecklagen": 0,
                 "depot_wertpapiere": 18650,
                 "versicherungsvertraege_wert": 0
-            }
+            },
+            "ziele_und_wuensche": []
         }
 
     e_und_a = profile.get("einnahmen_und_ausgaben", {})
     konten = profile.get("konten_und_vermoegenswerte", {})
+    ziele = profile.get("ziele_und_wuensche", [])
     
     netto = float(e_und_a.get("monatliches_netto_gehalt", 0))
     fixkosten = float(e_und_a.get("monatliche_fixkosten", 0))
@@ -73,6 +76,20 @@ def get_prognosen():
 
     current_year = datetime.now().year
     
+    # evaluate goals to see if they are achievable with current cashflow
+    verfuegbarer_cashflow = cashflow["ueberschuss"] + sparraten_gesamt
+    evaluated_goals = evaluate_goals(ziele, verfuegbarer_cashflow, current_year)
+
+    # merge original goal data (like target year) with the evaluation status
+    merged_goals = []
+    for original, eval_result in zip(ziele, evaluated_goals):
+        merged_goals.append({
+            **original,
+            "status": eval_result["status"],
+            "benoetigte_monatsrate": eval_result["benoetigte_monatsrate"],
+            "deckungsgard_prozent": eval_result["deckungsgard_prozent"]
+        })
+
     # KPS
     kpis = [
         {
@@ -131,5 +148,6 @@ def get_prognosen():
     return jsonify({
         "kpis": kpis,
         "monthlyData": monthly_data,
-        "wealthData": wealth_data
+        "wealthData": wealth_data,
+        "goals": merged_goals
     })
