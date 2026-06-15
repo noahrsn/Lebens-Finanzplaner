@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { NavLink } from 'react-router-dom'
+import { NavLink, useNavigate } from 'react-router-dom'
 
 const navItems = [
   {
@@ -77,6 +77,37 @@ function NavLinks({ onNavigate }) {
   )
 }
 
+function SignOutButton({ onNavigate }) {
+  const navigate = useNavigate()
+
+  const handleSignOut = async () => {
+    try {
+      await fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/logout', {
+        method: 'POST',
+        credentials: 'include', // send the session cookie so the server can clear it
+      })
+    } catch {
+      // ignore network errors — we still send the user back to the login page
+    }
+    onNavigate?.()
+    navigate('/') // back to the login page
+  }
+
+  return (
+    <div className="px-3 py-4 border-t border-slate-700">
+      <button
+        onClick={handleSignOut}
+        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-white transition-colors"
+      >
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
+        Abmelden
+      </button>
+    </div>
+  )
+}
+
 export default function Layout({ children }) {
   const [open, setOpen] = useState(false)
 
@@ -89,6 +120,7 @@ export default function Layout({ children }) {
           <span className="text-lg font-bold tracking-tight">FinanzPlaner</span>
         </div>
         <NavLinks />
+        <SignOutButton />
       </aside>
 
       {/* ── Mobile overlay ── */}
@@ -114,6 +146,7 @@ export default function Layout({ children }) {
           </button>
         </div>
         <NavLinks onNavigate={() => setOpen(false)} />
+        <SignOutButton onNavigate={() => setOpen(false)} />
       </aside>
 
       {/* ── Main area ── */}
