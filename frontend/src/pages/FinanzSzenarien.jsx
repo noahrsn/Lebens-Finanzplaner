@@ -1,8 +1,27 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid,
   Tooltip, Legend, ResponsiveContainer,
 } from 'recharts'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
+// The backend stores goals inside the financial profile (ziele_und_wuensche)
+// with German field names. These helpers translate between that shape and the
+// simple { id, label, current, target } shape this page works with.
+const toGoal = (g) => ({
+  id: g.id,
+  label: g.titel,
+  current: Number(g.aktueller_fortschritt) || 0,
+  target: Number(g.zielbetrag) || 0,
+})
+
+const toPayload = (label, current, target) => ({
+  titel: label,
+  zielbetrag: target,
+  aktueller_fortschritt: current,
+  zieldatum_jahr: new Date().getFullYear(),
+})
 
 const schnellSzenarien = [
   {
@@ -49,13 +68,6 @@ const schnellSzenarien = [
   },
 ]
 
-const initialGoals = [
-  { id: 1, label: 'Notfallfonds',   current: 5000,  target: 10000 },
-  { id: 2, label: 'Urlaub 2026',    current: 1500,  target: 3000  },
-  { id: 3, label: 'Neue Möbel',     current: 800,   target: 2000  },
-  { id: 4, label: 'Auto Anzahlung', current: 3200,  target: 8000  },
-]
-
 function Slider({ label, value, min, max, step, format, onChange }) {
   return (
     <div>
@@ -82,9 +94,23 @@ export default function FinanzSzenarien() {
   const [rendite,     setRendite]     = useState(5)
 
   // Goals state
-  const [goals, setGoals] = useState(initialGoals)
+  const [goals, setGoals] = useState([])
   const [goalModal, setGoalModal] = useState(false)
   const [newGoal, setNewGoal] = useState({ label: '', current: '', target: '' })
+  const [goalError, setGoalError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // Load the user's saved goals from the database when the page opens
+  useEffect(() => {
+    fetch(API_URL + '/api/financial-profile', { credentials: 'include' })
+      .then(res => (res.ok ? res.json() : null))
+      .then(profile => {
+        if (profile && Array.isArray(profile.ziele_und_wuensche)) {
+          setGoals(profile.ziele_und_wuensche.map(toGoal))
+        }
+      })
+      .catch(() => {/* offline / not logged in — just show no goals */})
+  }, [])
 
   // Derived calculations
   const currentSaving   = Math.max(0, income - expenses)
@@ -105,13 +131,34 @@ export default function FinanzSzenarien() {
     }))
   ), [currentSaving, optimizedSaving, monthlyRate])
 
-  function addGoal() {
+  async function addGoal() {
     const cur = parseFloat(newGoal.current)
     const tgt = parseFloat(newGoal.target)
     if (!newGoal.label || isNaN(cur) || isNaN(tgt) || tgt <= 0) return
-    setGoals(g => [...g, { id: Date.now(), label: newGoal.label, current: cur, target: tgt }])
-    setNewGoal({ label: '', current: '', target: '' })
-    setGoalModal(false)
+
+    setSaving(true)
+    setGoalError('')
+    try {
+      const res = await fetch(API_URL + '/api/financial-profile/goals', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(toPayload(newGoal.label, cur, tgt)),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        setGoalError(err.error || 'Ziel konnte nicht gespeichert werden.')
+        return
+      }
+      const savedGoal = await res.json()
+      setGoals(g => [...g, toGoal(savedGoal)])
+      setNewGoal({ label: '', current: '', target: '' })
+      setGoalModal(false)
+    } catch {
+      setGoalError('Server nicht erreichbar. Bitte versuche es später.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
@@ -242,7 +289,7 @@ export default function FinanzSzenarien() {
         <div className="space-y-4">
           <div className="flex justify-end">
             <button
-              onClick={() => setGoalModal(true)}
+              onClick={() => { setGoalError(''); setGoalModal(true) }}
               className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
             >
               <span className="text-lg leading-none">+</span> Neues Ziel
@@ -250,6 +297,11 @@ export default function FinanzSzenarien() {
           </div>
 
           <div className="bg-white rounded-xl p-6 shadow-sm space-y-5">
+            {goals.length === 0 && (
+              <p className="text-sm text-slate-400 text-center py-4">
+                Noch keine Ziele angelegt. Klicken Sie auf „+ Neues Ziel", um zu starten.
+              </p>
+            )}
             {goals.map(goal => {
               const pct = Math.min(100, Math.round((goal.current / goal.target) * 100))
               return (
@@ -299,18 +351,25 @@ export default function FinanzSzenarien() {
                     </div>
                   ))}
                 </div>
+                {goalError && (
+                  <p className="mt-4 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                    {goalError}
+                  </p>
+                )}
                 <div className="flex gap-3 mt-6">
                   <button
                     onClick={() => setGoalModal(false)}
-                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50"
+                    disabled={saving}
+                    className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
                   >
                     Abbrechen
                   </button>
                   <button
                     onClick={addGoal}
-                    className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold"
+                    disabled={saving}
+                    className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold disabled:opacity-50"
                   >
-                    Ziel speichern
+                    {saving ? 'Speichern…' : 'Ziel speichern'}
                   </button>
                 </div>
               </div>
