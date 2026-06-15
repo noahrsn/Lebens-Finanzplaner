@@ -7,16 +7,55 @@ function fmt(n) {
   return (n ?? 0).toLocaleString('de-DE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
 }
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
 export default function Dashboard() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [editGoal, setEditGoal] = useState(null)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    fetch((import.meta.env.VITE_API_URL || 'http://localhost:5000') + '/api/financial-profile', { credentials: 'include' })
+    fetch(API_URL + '/api/financial-profile', { credentials: 'include' })
       .then(r => r.ok ? r.json() : null)
       .then(data => { setProfile(data); setLoading(false) })
       .catch(() => setLoading(false))
   }, [])
+
+  async function handleDeleteGoal(id) {
+    if (!window.confirm('Dieses Ziel wirklich löschen?')) return
+    const res = await fetch(API_URL + '/api/financial-profile/goals/' + id, {
+      method: 'DELETE',
+      credentials: 'include',
+    })
+    if (res.ok) {
+      setProfile(p => ({ ...p, ziele_und_wuensche: (p.ziele_und_wuensche || []).filter(g => g.id !== id) }))
+    }
+  }
+
+  async function handleSaveGoal() {
+    setSaving(true)
+    try {
+      const res = await fetch(API_URL + '/api/financial-profile/goals/' + editGoal.id, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          titel: editGoal.titel,
+          zielbetrag: parseFloat(editGoal.zielbetrag),
+          aktueller_fortschritt: parseFloat(editGoal.aktueller_fortschritt),
+          zieldatum_jahr: parseInt(editGoal.zieldatum_jahr),
+        }),
+      })
+      if (res.ok) {
+        const saved = await res.json()
+        setProfile(p => ({ ...p, ziele_und_wuensche: (p.ziele_und_wuensche || []).map(g => g.id === saved.id ? saved : g) }))
+        setEditGoal(null)
+      }
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const ea      = profile?.einnahmen_und_ausgaben ?? {}
   const einkommen = ea.monatliches_netto_gehalt ?? 0
@@ -127,13 +166,34 @@ export default function Dashboard() {
                 ? Math.min(100, Math.round((goal.aktueller_fortschritt / goal.zielbetrag) * 100))
                 : 0
               return (
-                <div key={i}>
-                  <div className="flex justify-between text-sm mb-1.5">
+                <div key={goal.id ?? i}>
+                  <div className="flex justify-between items-center text-sm mb-1.5">
                     <span className="font-medium text-slate-700">{goal.titel}</span>
-                    <span className="text-slate-400 text-xs">
-                      {fmt(goal.aktueller_fortschritt)}€ / {fmt(goal.zielbetrag)}€
-                      <span className="ml-2 text-slate-500 font-medium">{pct}%</span>
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-slate-400 text-xs">
+                        {fmt(goal.aktueller_fortschritt)}€ / {fmt(goal.zielbetrag)}€
+                        <span className="ml-2 text-slate-500 font-medium">{pct}%</span>
+                      </span>
+                      <button
+                        onClick={() => setEditGoal({ ...goal })}
+                        title="Bearbeiten"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDeleteGoal(goal.id)}
+                        title="Löschen"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full bg-slate-800 rounded-full" style={{ width: `${pct}%` }} />
@@ -144,6 +204,56 @@ export default function Dashboard() {
           </div>
         )}
       </div>
+
+      {/* Edit goal modal */}
+      {editGoal && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-bold text-slate-900">Ziel bearbeiten</h3>
+              <button onClick={() => setEditGoal(null)} className="text-slate-400 hover:text-slate-600">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
+                </svg>
+              </button>
+            </div>
+            <div className="space-y-4">
+              {[
+                { label: 'Zielname', key: 'titel', type: 'text' },
+                { label: 'Aktueller Betrag (€)', key: 'aktueller_fortschritt', type: 'number' },
+                { label: 'Zielbetrag (€)', key: 'zielbetrag', type: 'number' },
+                { label: 'Ziel-Jahr', key: 'zieldatum_jahr', type: 'number' },
+              ].map(f => (
+                <div key={f.key}>
+                  <label className="text-sm font-medium text-slate-700 block mb-1">{f.label}</label>
+                  <input
+                    type={f.type}
+                    value={editGoal[f.key] ?? ''}
+                    onChange={e => setEditGoal(g => ({ ...g, [f.key]: e.target.value }))}
+                    className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  />
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={() => setEditGoal(null)}
+                disabled={saving}
+                className="flex-1 py-2.5 rounded-xl border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 disabled:opacity-50"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={handleSaveGoal}
+                disabled={saving}
+                className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold disabled:opacity-50"
+              >
+                {saving ? 'Speichern…' : 'Änderungen speichern'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

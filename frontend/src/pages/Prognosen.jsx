@@ -46,6 +46,7 @@ export default function Prognosen() {
     zieldatum_jahr: new Date().getFullYear() + 2
   })
   const [goalSubmitting, setGoalSubmitting] = useState(false)
+  const [editingId, setEditingId] = useState(null)
 
   const loadData = () => {
     fetch(API_URL + '/api/prognosen', {
@@ -69,12 +70,21 @@ export default function Prognosen() {
     loadData()
   }, [])
 
+  const resetGoalForm = () => {
+    setEditingId(null)
+    setShowGoalForm(false)
+    setNewGoal({ titel: '', zielbetrag: '', aktueller_fortschritt: '', zieldatum_jahr: new Date().getFullYear() + 2 })
+  }
+
   const handleAddGoal = async (e) => {
     e.preventDefault()
     setGoalSubmitting(true)
     try {
-      const res = await fetch(API_URL + '/api/financial-profile/goals', {
-        method: 'POST',
+      const url = editingId
+        ? API_URL + '/api/financial-profile/goals/' + editingId
+        : API_URL + '/api/financial-profile/goals'
+      const res = await fetch(url, {
+        method: editingId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({
@@ -88,14 +98,41 @@ export default function Prognosen() {
         const errorData = await res.json()
         throw new Error(errorData.error || 'Fehler beim Speichern des Ziels')
       }
-      
+
       loadData()
-      setShowGoalForm(false)
-      setNewGoal({ titel: '', zielbetrag: '', aktueller_fortschritt: '', zieldatum_jahr: new Date().getFullYear() + 2 })
+      resetGoalForm()
     } catch (err) {
       alert(err.message)
     } finally {
       setGoalSubmitting(false)
+    }
+  }
+
+  const startEditGoal = (g) => {
+    setEditingId(g.id)
+    setNewGoal({
+      titel: g.titel,
+      zielbetrag: g.zielbetrag,
+      aktueller_fortschritt: g.aktueller_fortschritt,
+      zieldatum_jahr: g.zieldatum_jahr
+    })
+    setShowGoalForm(true)
+  }
+
+  const handleDeleteGoal = async (id) => {
+    if (!window.confirm('Dieses Ziel wirklich löschen?')) return
+    try {
+      const res = await fetch(API_URL + '/api/financial-profile/goals/' + id, {
+        method: 'DELETE',
+        credentials: 'include'
+      })
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Fehler beim Löschen des Ziels')
+      }
+      loadData()
+    } catch (err) {
+      alert(err.message)
     }
   }
 
@@ -115,8 +152,8 @@ export default function Prognosen() {
           <h1 className="text-2xl font-bold text-slate-900">Prognosen</h1>
           <p className="text-sm text-slate-500 mt-1">Finanzielle Vorhersagen und Trends basierend auf deinen Daten</p>
         </div>
-        <button 
-          onClick={() => setShowGoalForm(!showGoalForm)}
+        <button
+          onClick={() => showGoalForm ? resetGoalForm() : setShowGoalForm(true)}
           className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors shadow-sm"
         >
           {showGoalForm ? 'Abbrechen' : '+ Neues Ziel'}
@@ -126,7 +163,7 @@ export default function Prognosen() {
       {/* goal form */}
       {showGoalForm && (
         <form onSubmit={handleAddGoal} className="bg-white rounded-xl p-6 shadow-sm border border-slate-200">
-          <h2 className="text-base font-semibold text-slate-900 mb-4">Neues Ziel setzen</h2>
+          <h2 className="text-base font-semibold text-slate-900 mb-4">{editingId ? 'Ziel bearbeiten' : 'Neues Ziel setzen'}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
             <div>
               <label className="block text-xs font-semibold text-slate-500 mb-1">TITEL</label>
@@ -170,15 +207,38 @@ export default function Prognosen() {
                     )}
                   </div>
                 </div>
-                <div className="text-left sm:text-right w-full sm:w-auto mt-2 sm:mt-0">
-                  <div className="text-sm font-medium text-slate-900">
-                    {g.aktueller_fortschritt.toLocaleString('de-DE')}€ <span className="text-slate-400">/ {g.zielbetrag.toLocaleString('de-DE')}€</span>
+                <div className="flex items-center gap-4 w-full sm:w-auto mt-2 sm:mt-0">
+                  <div className="text-left sm:text-right">
+                    <div className="text-sm font-medium text-slate-900">
+                      {g.aktueller_fortschritt.toLocaleString('de-DE')}€ <span className="text-slate-400">/ {g.zielbetrag.toLocaleString('de-DE')}€</span>
+                    </div>
+                    <div className="w-full sm:w-48 h-2 bg-slate-200 rounded-full mt-2 overflow-hidden">
+                      <div
+                        className={`h-full transition-all ${g.status === 'Unterstützt' ? 'bg-emerald-500' : 'bg-amber-400'}`}
+                        style={{ width: `${Math.min(100, (g.aktueller_fortschritt / g.zielbetrag) * 100)}%` }}
+                      />
+                    </div>
                   </div>
-                  <div className="w-full sm:w-48 h-2 bg-slate-200 rounded-full mt-2 overflow-hidden">
-                    <div 
-                      className={`h-full transition-all ${g.status === 'Unterstützt' ? 'bg-emerald-500' : 'bg-amber-400'}`} 
-                      style={{ width: `${Math.min(100, (g.aktueller_fortschritt / g.zielbetrag) * 100)}%` }} 
-                    />
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => startEditGoal(g)}
+                      title="Bearbeiten"
+                      className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+                        <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
+                    <button
+                      onClick={() => handleDeleteGoal(g.id)}
+                      title="Löschen"
+                      className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                        <path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
               </div>

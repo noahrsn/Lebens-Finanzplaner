@@ -241,6 +241,42 @@ def add_goal(user_id, goal_data):
     return goal
 
 
+def update_goal(user_id, goal_id, goal_data):
+    _require_mapping(goal_data, "Ziel")
+
+    profile = get_financial_profile(user_id)
+    if not profile:
+        raise LookupError("Finanzprofil wurde noch nicht angelegt.")
+
+    goals = list(profile.get("ziele_und_wuensche", []))
+    index = next((i for i, g in enumerate(goals) if g.get("id") == goal_id), None)
+    if index is None:
+        raise LookupError("Ziel nicht gefunden.")
+
+    updated_goal = {**goals[index]}
+    for field in ("titel", "zielbetrag", "aktueller_fortschritt", "zieldatum_jahr"):
+        if field in goal_data:
+            updated_goal[field] = goal_data[field]
+    goals[index] = updated_goal
+
+    patch_financial_profile_section(user_id, "ziele_und_wuensche", goals)
+    return updated_goal
+
+
+def delete_goal(user_id, goal_id):
+    profile = get_financial_profile(user_id)
+    if not profile:
+        raise LookupError("Finanzprofil wurde noch nicht angelegt.")
+
+    goals = list(profile.get("ziele_und_wuensche", []))
+    remaining = [g for g in goals if g.get("id") != goal_id]
+    if len(remaining) == len(goals):
+        raise LookupError("Ziel nicht gefunden.")
+
+    patch_financial_profile_section(user_id, "ziele_und_wuensche", remaining)
+    return {"id": goal_id, "deleted": True}
+
+
 def add_life_event(user_id, event_data):
     _require_mapping(event_data, "Life Event")
     for field in (

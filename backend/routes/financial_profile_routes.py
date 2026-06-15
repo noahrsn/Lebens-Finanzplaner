@@ -3,10 +3,12 @@ from flask import Blueprint, jsonify, request, session
 from database.financial_profile_service import (
     add_goal,
     add_life_event,
+    delete_goal,
     get_financial_profile,
     patch_financial_profile_section,
     save_financial_profile,
     update_financial_profile_with_log,
+    update_goal,
 )
 
 
@@ -107,6 +109,36 @@ def create_goal():
         return jsonify({"error": str(exc)}), 400
 
     return jsonify(goal), 201
+
+
+@financial_profile_bp.route("/api/financial-profile/goals/<goal_id>", methods=["PATCH", "PUT"])
+def edit_goal(goal_id):
+    unauthorized = _require_login()
+    if unauthorized:
+        return unauthorized
+
+    try:
+        goal = update_goal(_current_user_id(), goal_id, request.get_json(silent=True) or {})
+    except LookupError as exc:
+        return jsonify({"error": str(exc)}), 404
+    except ValueError as exc:
+        return jsonify({"error": str(exc)}), 400
+
+    return jsonify(goal), 200
+
+
+@financial_profile_bp.route("/api/financial-profile/goals/<goal_id>", methods=["DELETE"])
+def remove_goal(goal_id):
+    unauthorized = _require_login()
+    if unauthorized:
+        return unauthorized
+
+    try:
+        result = delete_goal(_current_user_id(), goal_id)
+    except LookupError as exc:
+        return jsonify({"error": str(exc)}), 404
+
+    return jsonify(result), 200
 
 
 @financial_profile_bp.route("/api/financial-profile/life-events", methods=["POST"])

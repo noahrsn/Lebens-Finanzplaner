@@ -99,6 +99,7 @@ export default function FinanzSzenarien() {
   const [newGoal, setNewGoal] = useState({ label: '', current: '', target: '' })
   const [goalError, setGoalError] = useState('')
   const [saving, setSaving] = useState(false)
+  const [editingId, setEditingId] = useState(null)
 
   // Load the user's saved goals from the database when the page opens
   useEffect(() => {
@@ -131,6 +132,20 @@ export default function FinanzSzenarien() {
     }))
   ), [currentSaving, optimizedSaving, monthlyRate])
 
+  function openNewGoal() {
+    setEditingId(null)
+    setNewGoal({ label: '', current: '', target: '' })
+    setGoalError('')
+    setGoalModal(true)
+  }
+
+  function startEditGoal(goal) {
+    setEditingId(goal.id)
+    setNewGoal({ label: goal.label, current: String(goal.current), target: String(goal.target) })
+    setGoalError('')
+    setGoalModal(true)
+  }
+
   async function addGoal() {
     const cur = parseFloat(newGoal.current)
     const tgt = parseFloat(newGoal.target)
@@ -139,8 +154,11 @@ export default function FinanzSzenarien() {
     setSaving(true)
     setGoalError('')
     try {
-      const res = await fetch(API_URL + '/api/financial-profile/goals', {
-        method: 'POST',
+      const url = editingId
+        ? API_URL + '/api/financial-profile/goals/' + editingId
+        : API_URL + '/api/financial-profile/goals'
+      const res = await fetch(url, {
+        method: editingId ? 'PATCH' : 'POST',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(toPayload(newGoal.label, cur, tgt)),
@@ -150,14 +168,31 @@ export default function FinanzSzenarien() {
         setGoalError(err.error || 'Ziel konnte nicht gespeichert werden.')
         return
       }
-      const savedGoal = await res.json()
-      setGoals(g => [...g, toGoal(savedGoal)])
+      const savedGoal = toGoal(await res.json())
+      setGoals(g => editingId
+        ? g.map(x => (x.id === editingId ? savedGoal : x))
+        : [...g, savedGoal])
       setNewGoal({ label: '', current: '', target: '' })
+      setEditingId(null)
       setGoalModal(false)
     } catch {
       setGoalError('Server nicht erreichbar. Bitte versuche es später.')
     } finally {
       setSaving(false)
+    }
+  }
+
+  async function deleteGoal(id) {
+    if (!window.confirm('Dieses Ziel wirklich löschen?')) return
+    try {
+      const res = await fetch(API_URL + '/api/financial-profile/goals/' + id, {
+        method: 'DELETE',
+        credentials: 'include',
+      })
+      if (!res.ok) return
+      setGoals(g => g.filter(x => x.id !== id))
+    } catch {
+      /* ignore — keep goal in list if delete failed */
     }
   }
 
@@ -289,7 +324,7 @@ export default function FinanzSzenarien() {
         <div className="space-y-4">
           <div className="flex justify-end">
             <button
-              onClick={() => { setGoalError(''); setGoalModal(true) }}
+              onClick={openNewGoal}
               className="flex items-center gap-2 bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold px-4 py-2.5 rounded-lg transition-colors"
             >
               <span className="text-lg leading-none">+</span> Neues Ziel
@@ -306,12 +341,33 @@ export default function FinanzSzenarien() {
               const pct = Math.min(100, Math.round((goal.current / goal.target) * 100))
               return (
                 <div key={goal.id}>
-                  <div className="flex justify-between text-sm mb-1.5">
+                  <div className="flex justify-between items-center text-sm mb-1.5">
                     <span className="font-medium text-slate-700">{goal.label}</span>
-                    <span className="text-slate-400 text-xs">
-                      {goal.current.toLocaleString('de-DE')}€ / {goal.target.toLocaleString('de-DE')}€
-                      <span className="ml-2 font-medium text-slate-500">{pct}%</span>
-                    </span>
+                    <div className="flex items-center gap-3">
+                      <span className="text-slate-400 text-xs">
+                        {goal.current.toLocaleString('de-DE')}€ / {goal.target.toLocaleString('de-DE')}€
+                        <span className="ml-2 font-medium text-slate-500">{pct}%</span>
+                      </span>
+                      <button
+                        onClick={() => startEditGoal(goal)}
+                        title="Bearbeiten"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" strokeLinecap="round" strokeLinejoin="round" />
+                          <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => deleteGoal(goal.id)}
+                        title="Löschen"
+                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                          <path d="M3 6h18M8 6V4a1 1 0 011-1h6a1 1 0 011 1v2m2 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14zM10 11v6M14 11v6" strokeLinecap="round" strokeLinejoin="round" />
+                        </svg>
+                      </button>
+                    </div>
                   </div>
                   <div className="h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div className="h-full bg-slate-800 rounded-full" style={{ width: `${pct}%` }} />
@@ -326,7 +382,7 @@ export default function FinanzSzenarien() {
             <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
               <div className="bg-white rounded-2xl shadow-xl w-full max-w-md mx-4 p-6">
                 <div className="flex items-center justify-between mb-5">
-                  <h3 className="text-lg font-bold text-slate-900">Neues Ziel hinzufügen</h3>
+                  <h3 className="text-lg font-bold text-slate-900">{editingId ? 'Ziel bearbeiten' : 'Neues Ziel hinzufügen'}</h3>
                   <button onClick={() => setGoalModal(false)} className="text-slate-400 hover:text-slate-600">
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path d="M6 18L18 6M6 6l12 12" strokeLinecap="round" />
@@ -369,7 +425,7 @@ export default function FinanzSzenarien() {
                     disabled={saving}
                     className="flex-1 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-700 text-white text-sm font-semibold disabled:opacity-50"
                   >
-                    {saving ? 'Speichern…' : 'Ziel speichern'}
+                    {saving ? 'Speichern…' : (editingId ? 'Änderungen speichern' : 'Ziel speichern')}
                   </button>
                 </div>
               </div>
