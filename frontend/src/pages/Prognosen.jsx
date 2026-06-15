@@ -5,6 +5,8 @@ import {
   Legend, ResponsiveContainer, ReferenceDot
 } from 'recharts'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000'
+
 const kpiIcons = {
   "bg-emerald-50": (
     <svg className="w-5 h-5 text-emerald-500" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
@@ -46,7 +48,7 @@ export default function Prognosen() {
   const [goalSubmitting, setGoalSubmitting] = useState(false)
 
   const loadData = () => {
-    fetch('http://localhost:5000/api/prognosen', {
+    fetch(API_URL + '/api/prognosen', {
       credentials: 'include'
     })
       .then(res => {
@@ -71,7 +73,7 @@ export default function Prognosen() {
     e.preventDefault()
     setGoalSubmitting(true)
     try {
-      const res = await fetch('http://localhost:5000/api/financial-profile/goals', {
+      const res = await fetch(API_URL + '/api/financial-profile/goals', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
