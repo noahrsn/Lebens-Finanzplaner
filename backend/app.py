@@ -9,6 +9,7 @@ from routes.auth_routes import auth_bp
 from routes.financial_profile_routes import financial_profile_bp
 from routes.user_routes import user_bp
 from routes.prognosen_routes import prognosen_bp
+from routes.chat_routes import chat_bp
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY", os.urandom(32))
@@ -34,6 +35,7 @@ app.register_blueprint(auth_bp)
 app.register_blueprint(user_bp)
 app.register_blueprint(financial_profile_bp)
 app.register_blueprint(prognosen_bp)
+app.register_blueprint(chat_bp)
 
 @app.route("/")
 def index():

@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard'
 import MeineFinanzen from './pages/MeineFinanzen'
 import Prognosen from './pages/Prognosen'
 import FinanzSzenarien from './pages/FinanzSzenarien'
+import KiAssist from './pages/KiAssist'
 import Layout from './components/Layout'
 import PrivateRoute from './components/PrivateRoute'
 
@@ -36,6 +37,9 @@ function App() {
         } />
         <Route path="/szenarien" element={
           <PrivateRoute><Layout><FinanzSzenarien /></Layout></PrivateRoute>
+        } />
+        <Route path="/ki-assist" element={
+          <PrivateRoute><Layout><KiAssist /></Layout></PrivateRoute>
         } />
 
         <Route path="*" element={<Navigate to="/" replace />} />
