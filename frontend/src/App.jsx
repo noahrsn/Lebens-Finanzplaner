@@ -21,6 +21,7 @@ function App() {
         <Route path="/registrieren" element={<Register />} />
         <Route path="/passwort-vergessen" element={<ForgotPassword />} />
         <Route path="/passwort-zuruecksetzen" element={<ResetPassword />} />
+        <Route path="/faq" element={<FAQ />} />
 
         {/* Protected routes — only logged-in users can visit */}
         <Route path="/eingabe" element={
