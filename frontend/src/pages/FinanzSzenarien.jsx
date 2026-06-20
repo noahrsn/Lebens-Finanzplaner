@@ -200,7 +200,7 @@ export default function FinanzSzenarien() {
     <div className="p-4 sm:p-8 space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-slate-900">Finanz Szenarien & Ziele</h1>
+        <h1 className="text-2xl font-bold text-slate-900">Finanz-Szenarien & Ziele</h1>
         <p className="text-sm text-slate-500 mt-1">Simulieren Sie verschiedene finanzielle Szenarien und verwalten Sie Ihre Ziele</p>
       </div>
 

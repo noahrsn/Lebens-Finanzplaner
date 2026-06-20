@@ -147,7 +147,7 @@ export default function Prognosen() {
   return (
     <div className="p-8 space-y-6">
       {/* Header */}
-      <div className="flex justify-between items-start">
+      <div className="flex justify-between items-start gap-4 pr-24">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Prognosen</h1>
           <p className="text-sm text-slate-500 mt-1">Finanzielle Vorhersagen und Trends basierend auf deinen Daten</p>
