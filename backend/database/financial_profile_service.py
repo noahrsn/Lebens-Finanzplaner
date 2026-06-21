@@ -221,7 +221,7 @@ def update_financial_profile_with_log(user_id, updated_sections):
 
     merged["updatedAt"] = _now_iso()
 
-    return merged
+    return save_financial_profile(user_id, merged)
 
 
 def add_goal(user_id, goal_data):
