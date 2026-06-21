@@ -26,7 +26,7 @@ const toPayload = (label, current, target) => ({
 const schnellSzenarien = [
   {
     label: 'Gehaltserhöhung',
-    desc: 'Was wäre, wenn Sie 10% mehr verdienen würden?',
+    desc: 'Was wäre, wenn du 10% mehr verdienen würdest?',
     monat: '+350€/Monat',
     jahr: '+4.200€/Jahr',
     iconBg: 'bg-emerald-50',
@@ -201,7 +201,7 @@ export default function FinanzSzenarien() {
       {/* Header */}
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Finanz-Szenarien & Ziele</h1>
-        <p className="text-sm text-slate-500 mt-1">Simulieren Sie verschiedene finanzielle Szenarien und verwalten Sie Ihre Ziele</p>
+        <p className="text-sm text-slate-500 mt-1">Simuliere verschiedene finanzielle Szenarien und verwalte deine Ziele</p>
       </div>
 
       {/* Tabs */}
@@ -334,7 +334,7 @@ export default function FinanzSzenarien() {
           <div className="bg-white rounded-xl p-6 shadow-sm space-y-5">
             {goals.length === 0 && (
               <p className="text-sm text-slate-400 text-center py-4">
-                Noch keine Ziele angelegt. Klicken Sie auf „+ Neues Ziel", um zu starten.
+                Noch keine Ziele angelegt. Klicke auf „+ Neues Ziel", um zu starten.
               </p>
             )}
             {goals.map(goal => {
