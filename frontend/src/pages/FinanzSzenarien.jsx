@@ -23,6 +23,7 @@ const toPayload = (label, current, target) => ({
   zieldatum_jahr: new Date().getFullYear(),
 })
 
+{/* erstmalig entfernt
 const schnellSzenarien = [
   {
     label: 'Gehaltserhöhung',
@@ -67,6 +68,7 @@ const schnellSzenarien = [
     ),
   },
 ]
+*/}
 
 function Slider({ label, value, min, max, step, format, onChange }) {
   return (
@@ -256,11 +258,21 @@ export default function FinanzSzenarien() {
 
           {/* Result cards */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-emerald-50 rounded-xl p-5">
-              <p className="text-xs text-slate-500 mb-3">Aktuelles Sparen</p>
+            <div className="bg-emerald-50 rounded-xl p-5 relative">
+              <p className="text-xs text-slate-500 mb-3 flex items-center">
+                Aktuelles Sparen
+                <span className="ml-2 relative group">
+                  <button className="text-slate-400 hover:text-slate-600 focus:outline-none">
+                    ℹ️
+                  </button>
+                  <div className="absolute left-0 top-6 hidden group-hover:block bg-white text-slate-700 text-xs rounded-lg shadow-lg p-2 w-48">
+                    Dies zeigt, wie viel aktuell monatlich gespart wird.
+                  </div>
+                </span>
+              </p>
               <p className="text-3xl font-bold text-slate-900">{currentSaving.toLocaleString('de-DE')}€</p>
               <p className="text-xs text-slate-400 mt-2">pro Monat</p>
-            </div>
+          </div>
             <div className="bg-emerald-50 rounded-xl p-5">
               <p className="text-xs text-slate-500 mb-3">Optimiertes Sparen</p>
               <p className="text-3xl font-bold text-slate-900">{optimizedSaving.toLocaleString('de-DE')}€</p>
@@ -300,7 +312,7 @@ export default function FinanzSzenarien() {
           </div>
 
           {/* Schnell-Szenarien */}
-          <div>
+          {/* <div>
             <h2 className="text-base font-semibold text-slate-900 mb-4">Schnell-Szenarien</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {schnellSzenarien.map(s => (
@@ -315,7 +327,7 @@ export default function FinanzSzenarien() {
                 </div>
               ))}
             </div>
-          </div>
+          </div>*/}
         </div>
       )}
 
