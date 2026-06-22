@@ -25,7 +25,7 @@ const answeredQuestions = [
     ],
   },
   {
-    title: 'Verwendung der Website',
+    group: 'Verwendung der Website',
     items: [
       {
         question: 'Wie kann ich Ziele anlegen und verwalten?',
@@ -55,7 +55,7 @@ const answeredQuestions = [
     ],
   },
   {
-    title: 'Allgemeine Finanzfragen',
+    group: 'Allgemeine Finanzfragen',
     items: [
       {
         question: 'Welche Anlageformen gibt es?',
