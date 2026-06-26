@@ -22,8 +22,8 @@ Open `http://localhost:5173` in your browser.
 
 ## JSON to SQL migration
 
-After applying the tables from `database.txt`, existing JSON snapshots can be
-backfilled into the SQL columns and child tables with:
+After applying the tables from `database.txt`, the goal and life-event arrays
+inside `financial_profiles.data` can be copied into their child tables with:
 
 ```bash
 cd backend && python migrate_json_to_sql.py
