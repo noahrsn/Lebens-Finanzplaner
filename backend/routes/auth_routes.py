@@ -5,8 +5,13 @@ import secrets
 import hashlib
 from datetime import datetime, timedelta, timezone
 from database.email_service import send_password_reset_email
-from database.user_service import find_user_by_email, create_user, set_password_reset_token, update_password
-from database.supabase_service import get_supabase_client
+from database.user_service import (
+    create_user,
+    find_user_by_email,
+    find_user_by_reset_token_hash,
+    set_password_reset_token,
+    update_password,
+)
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -73,6 +78,12 @@ def logout():
 def _hash_token(token):
     return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
+def _parse_datetime(value):
+    parsed = datetime.fromisoformat(str(value).replace("Z", "+00:00"))
+    if parsed.tzinfo is None:
+        return parsed.replace(tzinfo=timezone.utc)
+    return parsed
+
 @auth_bp.route("/api/forgot-password", methods=["POST"])
 def forgot_password():
     data = request.get_json()
@@ -115,16 +126,12 @@ def reset_password():
 
     token_hash = _hash_token(token)
 
-    client = get_supabase_client()
-    res = client.table("users").select("*").eq("data->>passwordResetTokenHash", token_hash).execute()
+    user = find_user_by_reset_token_hash(token_hash)
 
-    if not res.data:
+    if not user:
         return jsonify({"error": "Reset-Link ist ungültig oder abgelaufen."}), 400
 
-    user = res.data[0]["data"]
-    user["id"] = res.data[0]["id"]
-
-    expires_at = datetime.fromisoformat(user["passwordResetExpiresAt"])
+    expires_at = _parse_datetime(user["passwordResetExpiresAt"])
 
     if expires_at < datetime.now(timezone.utc):
         return jsonify({"error": "Reset-Link ist ungültig oder abgelaufen."}), 400

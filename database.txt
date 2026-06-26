@@ -1,0 +1,66 @@
+create table public.users (
+  id uuid not null default gen_random_uuid (),
+  data jsonb not null,
+  email text not null default ''::text,
+  password text not null,
+  vorname text not null,
+  nachname text not null,
+  geburtsdatum date not null,
+  "passwordResetTokenHash" text null,
+  "passwordResetExpiresAt" timestamp with time zone null,
+  "createdAt" timestamp with time zone null,
+  "updatedAt" timestamp with time zone null,
+  constraint users_pkey primary key (id),
+  constraint users_email_key unique (email)
+) TABLESPACE pg_default;
+
+create table public.financial_profiles (
+  id text not null,
+  data jsonb not null,
+  user_id uuid null,
+  monatliches_netto_gehalt numeric null,
+  monatliche_fixkosten numeric null,
+  monatliche_variable_ausgaben numeric null,
+  sparrate_gesamt_monatlich numeric null,
+  sparrate_depot numeric null,
+  sparrate_tagesgeld numeric null,
+  geplantes_renteneintrittsalter numeric null,
+  aktuelle_rentenpunkte numeric null,
+  erwartete_rentenpunkte_bei_eintritt numeric null,
+  girokonto_stand numeric null,
+  tagesgeld_stand numeric null,
+  ruecklagen numeric null,
+  depot_wertpapiere numeric null,
+  versicherungsvertraege_wert numeric null,
+  created_at timestamp with time zone null,
+  updated_at timestamp with time zone null,
+  angenommene_inflation_prozent numeric null,
+  constraint financial_profiles_pkey primary key (id),
+  constraint financial_profiles_user_id_fkey foreign KEY (user_id) references users (id)
+) TABLESPACE pg_default;
+
+create table public.financial_goals (
+  id uuid not null default gen_random_uuid (),
+  titel text null default ''::text,
+  zielbetrag numeric null,
+  aktueller_fortschritt numeric null,
+  zieldatum_jahr integer null,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone null,
+  profile_id text null,
+  constraint financial_goals_pkey primary key (id),
+  constraint financial_goals_profile_id_fkey foreign KEY (profile_id) references financial_profiles (id)
+) TABLESPACE pg_default;
+
+create table public.life_events (
+  id uuid not null default gen_random_uuid (),
+  ereignis_typ text null default ''::text,
+  eintrittsjahr integer null,
+  auswirkung_auf_ausgaben_monatlich numeric null,
+  auswirkung_auf_einkommen_monatlich numeric null,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone null,
+  profile_id text null,
+  constraint life_events_pkey primary key (id),
+  constraint life_events_profile_id_fkey foreign KEY (profile_id) references financial_profiles (id)
+) TABLESPACE pg_default;
