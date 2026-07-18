@@ -1,0 +1,10 @@
+-	Backend für Registrierung und Login (Nutzer anlegen, Ein- und Ausloggen) --> 4h
+-	Anpassen von SQL auf NoSQL (da ursprünglich Azure Cosmos DB verwendet) --> 2h
+-	Basierend auf den Eingabewerten Backend für financial_profile_service und financial_profile_routes erstellt;
+    Eingabewerte zu den Finanzdaten werden in der Datenbank gespeichert --> 4h
+-	E-Mail-Server eingerichtet für Passwort-vergessen-Funktionalität --> 2h
+-	Passwort-vergessen-Funktionalität programmiert --> 4h
+-	Website getestet im Zuge der Vorbereitung einer Demo --> 2h
+-	FAQ-Seite eingerichtet mit ersten Fragen und korrekter Weiterleitung --> 6h
+-	Datenbank überarbeiten nach Umstieg von Azure auf PostgreSQL 
+    (von JSON in relationale Tabellenstruktur überführt) --> 10h
