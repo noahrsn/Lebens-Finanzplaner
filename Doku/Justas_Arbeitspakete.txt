@@ -1,0 +1,25 @@
+Arbeitspakete: Justas
+
+Fokus: Prognosen Feature
+
+---
+
+Backend (prognosen_routes.py) - ca. 12h:
+- Implementierung des /api/prognosen Endpunkts. (4h)
+- Anbindung an die Datenbank zur Abfrage von Finanzprofilen (mit Fallback auf Dummy-Daten). (3h)
+- Nutzung von finance_math/calculator.py für Finanzberechnungen (Cashflow, Nettovermögen, Investitionswachstum). (3h)
+- Aufbereitung der berechneten Daten (KPIs, Chart-Daten) als JSON für das Frontend. (2h)
+
+---
+
+Frontend (Prognosen.jsx) - ca. 10h:
+- Entwicklung der React-Komponente für die "Prognosen"-Seite. (6h)
+- Anbindung an den /api/prognosen Endpunkt zur Abfrage der Daten. (2h)
+- Visuelle Darstellung der JSON-Daten mithilfe von "recharts" für Diagramme und KPIs. (2h)
+
+---
+
+Testing (test_routes.py) - ca. 8h:
+- Erstellung von Unit-Tests für den /api/prognosen Endpunkt (test_get_prognosen_with_dummy_data). (5h)
+- Mocking von Datenbankfunktionen, um den Fall ohne Benutzerprofil zu simulieren. (2h)
+- Sicherstellung, dass die API den Status 200 OK und die erwartete Datenstruktur zurückgibt. (1h)
