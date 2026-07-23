@@ -1,0 +1,32 @@
+Phase 1: Projekt-Setup & Grundlagen (Anfang Mai)
+-	Frontend-Projekt aufgesetzt mit Vite, React und Tailwind CSS --> 3h
+-	Mockups/Designkonzept für die Seiten erstellt (Farbschema, Sidebar-Layout) --> 4h
+-	Login-Seite mit responsivem Split-Screen-Layout gebaut --> 4h
+
+Phase 2: Frontend-Seiten (Mitte Mai)
+-	Dashboard-Seite mit Sidebar-Layout und Charts (KPIs, Balkendiagramm) --> 5h
+-	Meine-Finanzen-Seite mit Kreisdiagramm, Transaktionsliste und Modal --> 5h
+-	Prognosen-Seite erstellt und alle Seiten responsive gemacht --> 4h
+-	Finanz-Szenarien-Seite mit interaktiven Slidern und Ziele-Tab --> 5h
+
+Phase 3: Authentifizierung & Anbindung ans Backend (Mitte/Ende Mai)
+-	Registrierungs-Seite erstellt und Navigation zwischen Login/Registrierung verlinkt --> 3h
+-	Login, Registrierung und Session im Frontend ans Backend angebunden,
+    geschützte Routen (PrivateRoute) eingerichtet --> 5h
+-	Docker-Setup für Frontend und Backend erstellt (Dockerfiles, docker-compose) --> 4h
+
+Phase 4: Finanzprofil & echte Daten (Ende Mai)
+-	Geburtsdatum zur Registrierung hinzugefügt (Frontend + Backend) --> 2h
+-	Eingabe-Seite für die erstmalige Erfassung der Finanzdaten erstellt --> 5h
+-	Meine-Finanzen-Seite zu einem bearbeitbaren Finanzprofil umgebaut --> 4h
+-	Dashboard mit den echten Profildaten aus der Datenbank verbunden --> 3h
+
+Phase 5: Ziele & Feinschliff (Juni)
+-	Abmelden-Button in der Sidebar eingebaut --> 1h
+-	Ziele der Nutzer in der Datenbank gespeichert und Beispiel-Ziele entfernt --> 3h
+-	Bearbeiten- und Löschen-Funktion für Ziele inkl. Backend-Endpunkte --> 4h
+-	API-URLs für das Online-Deployment angepasst (VITE_API_URL) --> 1h
+-	UI-Texte überarbeitet (durchgehend "du" statt "Sie") --> 2h
+
+Phase 6: Dokumentation (Juli)
+-	Workflow-Dokumentation für das Frontend geschrieben (flow.md) --> 3h
